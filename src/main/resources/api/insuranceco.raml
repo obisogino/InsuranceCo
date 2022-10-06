@@ -1,0 +1,165 @@
+#%RAML 1.0
+title: InsuranceCo
+
+mediaType: 
+- application/json
+
+baseUri:
+
+types:
+  AccountInfo: !include DataTypes/AccountInfo.raml
+  Car: !include DataTypes/Car.raml
+  CustomError: !include DataTypes/CustomError.raml
+  LoginRequest: !include DataTypes/LoginRequest.raml
+  LoginResponse: !include DataTypes/LoginResponse.raml
+  PolicyListing: !include DataTypes/PolicyListing.raml
+
+
+
+/account:
+  post:
+    displayName: Create User Account
+    description: User account represents a single user
+    body:
+      type: AccountInfo
+    responses:
+      201:
+        body:
+      400:
+        body:
+          type: CustomError  
+  get:
+    displayName: Get User Account
+    description: User account represents a single user
+    headers:
+      authToken:
+        type: string
+        required: true
+
+    responses:
+      201:
+        body:
+      404:
+        body:
+          type: CustomError
+
+/login:
+  post:
+    displayName: Login to Account
+    body:
+      type: LoginRequest
+    responses:
+      200:
+        body:
+          type: LoginResponse
+      401:
+        body:
+          type: CustomError  
+  
+/policies:
+  displayName: Manage Policies
+  get:
+    displayName: Get List of Policies under your account
+    headers:
+      authToken:
+        type: string
+        required: true
+    queryParameters:
+      policyType:
+          type: string
+          required: false
+    responses:
+      200:
+        body:
+          type: PolicyListing[]
+
+  /retirement:
+    displayName: Create Retirement Insurance Policy
+    post:
+      displayName: create retirement insurance policy
+      headers:
+        authToken:
+          type: string
+          required: true
+      body:
+        multipart/form-data:
+          properties:
+            govtId:
+              description: Government Issued Id
+              type: file
+              required: true
+            policyInfo:
+              description: Government Issued Id
+              type: object
+              required: true
+    get:
+      displayName: Get All retirement insurance policy under account
+      headers:
+        authToken:
+          type: string
+    
+    /claim:
+      displayName: Claim Policy
+      post:
+        headers:
+          authToken:
+            type: string
+            required: true
+        body:
+          type: 
+  /car:
+    displayName: create car insurance policy
+    get:
+      responses:
+        200:
+        503:
+          body:
+            type: CustomError
+    post:
+      headers:
+        authToken:
+          type: string
+          required: true
+      responses:
+        200:
+        503:
+          body:
+            type: CustomError
+    /{policyNumber}/claims:
+      get:
+        responses:
+          200:
+          503:
+            body:
+              type: CustomError
+  /hmo:
+    get:
+      description: Get Subscribed HMO
+
+    /subscribe:
+      post:
+        headers:
+          authToken:
+            type: string
+            required: true
+        body:
+          type: any
+    /list:
+      get:
+        description: Get list of avaiable HMO plans
+
+  /travel:
+    get:
+      description: Get Subscribed Travel Insurance
+
+    /subscribe:
+      post:
+        headers:
+          authToken:
+            type: string
+            required: true
+        body:
+          type: any
+    /list:
+      get:
+        description: Get list of avaiable Travel insurance plans

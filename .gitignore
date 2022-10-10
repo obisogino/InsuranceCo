@@ -1,42 +1,42 @@
 # ------------------------------------------------------------------------------ #
 # Java defaults (https://github.com/github/gitignore/blob/master/Java.gitignore) #
 # ------------------------------------------------------------------------------ #
-*.class
+#*.class
 
 # Package Files #
-*.jar
-*.war
-*.ear
+#*.jar
+#*.war
+#*.ear
 
 # ------------------------------------------------------------------------------------------- #
 # Eclipse-specific (https://github.com/github/gitignore/blob/master/Global/Eclipse.gitignore) #
 # ------------------------------------------------------------------------------------------- #
-*.pydevproject
-.metadata
-bin/**
-tmp/**
-tmp/**/*
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.settings/
-.loadpath
-.project
-.classpath
+#*.pydevproject
+#.metadata
+#bin/**
+#tmp/**
+#tmp/**/*
+#*.tmp
+#*.bak
+#*.swp
+#*~.nib
+#local.properties
+#.settings/
+#.loadpath
+#.project
+#.classpath
 
 # External tool builders
-.externalToolBuilders/
+#.externalToolBuilders/
 
 # Locally stored "Eclipse launch configurations"
-*.launch
+#*.launch
 
 # CDT-specific
-.cproject
+#.cproject
 
 # PDT-specific
-.buildpath
+#.buildpath
 
 # --------------- #
 # Studio-specific #

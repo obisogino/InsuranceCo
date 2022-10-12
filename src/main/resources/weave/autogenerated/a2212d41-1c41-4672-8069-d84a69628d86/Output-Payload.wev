@@ -1,0 +1,7 @@
+%dw 2.0
+
+type auto_a2212d41_1c41_4672_8069_d84a69628d86_Output_Payload = {
+  authkey: String, 
+  _?: Any
+}
+

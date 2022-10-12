@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
     <http:listener-config name="insuranceco-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
@@ -125,6 +125,7 @@ output application/json
     </flow>
     <flow name="get:\account:insuranceco-config">
         <logger level="INFO" message="get:\account:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="b628d087-2c6b-441e-8710-67bc00a9d798" name="GetAccount"/>
     </flow>
     <flow name="get:\policies\hmo:insuranceco-config">
         <logger level="INFO" message="get:\policies\hmo:insuranceco-config" />
@@ -157,9 +158,11 @@ output application/json
     </flow>
     <flow name="post:\account:application\json:insuranceco-config">
         <logger level="INFO" message="post:\account:application\json:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="ba4beb2e-a144-4024-bad3-25c3ac727bb4" name="createUser"/>
     </flow>
     <flow name="post:\login:application\json:insuranceco-config">
         <logger level="INFO" message="post:\login:application\json:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="b2ecb9b1-2e3b-4b23-b17b-6ec7198f99a5" name="Login"/>
     </flow>
     <flow name="post:\policies\travel\subscribe:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\travel\subscribe:application\json:insuranceco-config" />

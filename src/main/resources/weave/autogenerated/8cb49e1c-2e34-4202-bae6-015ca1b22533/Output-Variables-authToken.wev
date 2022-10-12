@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_8cb49e1c_2e34_4202_bae6_015ca1b22533_Output_Variables_authToken = Any
+

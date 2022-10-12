@@ -1,0 +1,24 @@
+%dw 2.0
+
+type auto_8cb49e1c_2e34_4202_bae6_015ca1b22533_Output_Variables_accountInfo = {|
+  userId: Number, 
+  username?: String, 
+  password?: String, 
+  salt?: String, 
+  firstName?: String, 
+  middleName?: String, 
+  lastName?: String, 
+  nationality?: String, 
+  accountType?: String, 
+  insuranceWallet?: Number, 
+  jobCategoryId?: Number, 
+  accountScore?: Number, 
+  premiumMultiplier?: Number, 
+  dateCreated?: Date, 
+  addressLine1?: String, 
+  addressLine2?: String, 
+  city?: String, 
+  state?: String, 
+  zipCode?: String
+|}
+

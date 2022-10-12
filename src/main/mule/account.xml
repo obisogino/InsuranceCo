@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<db:config name="Database_Config" doc:name="Database Config" doc:id="d61acac6-9b1d-4bba-8a66-17a5e6acfc15" >
-		<db:my-sql-connection host="localhost" port="3306" user="admin" password="admin" database="insurancedb" />
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="insurancedb" />
 	</db:config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="f9a021c3-0be2-4b62-a4cc-3a1653d3f34d" />
 	<flow name="createUser" doc:id="dcf1bcde-1d3c-4ef1-943e-5b37796cea39" >
 		<set-variable value="#[payload]" doc:name="Set Variable inpt" doc:id="b8a76e62-c147-40ec-b1b0-3ccd291dbc34" variableName="inpt" />
 		<db:query-single doc:name="Query single" doc:id="f9a690da-2212-47b8-898a-3f1556d85e62" config-ref="Database_Config" >
@@ -76,11 +79,10 @@ else {score: 0}]]></ee:set-variable>
 		</ee:transform>
 		<db:insert doc:name="Insert" doc:id="1f5fe40c-6dea-48ff-8208-9215b4da355d" config-ref="Database_Config" >
 			<db:sql ><![CDATA[insert into 
-	useraccount(acountType, firstName, lastName, nationality, address, username, password, contactNumber, insuranceWallet, birthdate, email, jobCategoryId, accountScore, premiumMultiplier)
-	values (:acountType, :firstName, :lastName, :nationality, :address, :username, :password, :contactNumber, :insuranceWallet, :birthdate,
-	:email, :jobCategoryId, :accountScore, :premiumMultiplier)
+	users(firstName, lastName, nationality, addressLine1, username, password, addressLine2, insuranceWallet, jobCategoryId, accountScore, premiumMultiplier)
+	values (:firstName, :lastName, :nationality, :address, :username, :password, :contactNumber, :insuranceWallet, :jobCategoryId, :accountScore, :premiumMultiplier)
 ]]></db:sql>
-			<db:input-parameters ><![CDATA[#[{acountType: "insurance", 
+			<db:input-parameters ><![CDATA[#[{
 firstName: vars.inpt.firstName,
 lastName: vars.inpt.lastName,
 nationality: vars.inpt.nationality,
@@ -97,5 +99,67 @@ contactNumber: vars.inpt.contactNumber,
 }]]]></db:input-parameters>
 		</db:insert>
 		<set-payload value='#[output application/json ---&#10;{message:"Insurance Account Created"}]' doc:name="Set Payload" doc:id="edfd46a8-1938-4631-b226-e5d5c7d4a1bf" />
+	</flow>
+	<flow name="Login" doc:id="a2212d41-1c41-4672-8069-d84a69628d86" >
+		<db:query-single doc:name="Query single" doc:id="a3db8ca9-2c42-4b22-ac00-52ecd7be72e3" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select * from users where username = :username and password = :password]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{username: payload.username, password: payload.password}]]]></db:input-parameters>
+		</db:query-single>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="7ce1005f-6547-4865-8770-a86170cbdc0e" variableName="user" />
+		<choice doc:name="Choice" doc:id="a72f71ba-28ce-4810-b5f9-b02bb8239287" >
+			<when expression="#[payload.userId != null]" >
+				<java:invoke-static method="generateAlphaNum(java.lang.Integer)" doc:name="Invoke static" doc:id="4af7de47-489c-4984-be1b-6a2894031f10" class="com.spacebank.insurancecenter.AlphaNumGenerator1">
+					<java:args ><![CDATA[#[{length: 10 as Number}]]]></java:args>
+				</java:invoke-static>
+				<set-variable value="#[payload]" doc:name="Set Variable" doc:id="7b734cef-ec9d-4a88-9a7a-4ae277fcc308" variableName="authToken" />
+				<os:store doc:name="Store" doc:id="97b0b076-d2ff-45d3-903b-d940bfd5b475" objectStore="Object_store" key="#[vars.authToken]">
+					<os:value ><![CDATA[#[vars.user]]]></os:value>
+				</os:store>
+				<set-payload value="#[output application/json&#10;---&#10;{&#10;	authToken: vars.authToken&#10;}]" doc:name="Set Payload" doc:id="9a63e800-5303-48ca-8723-4d0a8d5be6c3" />
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="0b392c99-0234-48da-9d9b-0fecee0c0b65" type="ACCOUNT:NOT_FOUND" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fd56ecfb-f79e-43de-9b3f-6d3f850d10bc" type="ACCOUNT:NOT_FOUND" >
+				<set-payload value='#[output application/json&#10;---&#10;{&#10;	statusCode: 401,&#10;	message: "No Username or Password found"&#10;}]' doc:name="Set Payload" doc:id="045eb8da-6517-4de5-9e90-5695799bf366" mimeType="application/json" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getLoggedIn(authToken)" doc:id="37e46bc8-27f4-4dbe-9fec-cb3908a12252" >
+		<os:retrieve doc:name="Retrieve" doc:id="68075cd7-72ba-472f-bfa6-7b0245ecd3c6" key="#[vars.authToken]" objectStore="Object_store" />
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="62c1c1dc-7456-4598-b4e2-284e41aad1e4" />
+		<db:query-single doc:name="Query single" doc:id="4da7c1d6-9d7c-42b3-b910-657dc79efe00" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select * from users where username = :username]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{username: payload.username}]]]></db:input-parameters>
+		</db:query-single>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="66c28877-5d1d-45f8-90c2-203439a99eae" variableName="accountInfo" />
+		<os:store doc:name="Store" doc:id="200da2a2-5ab1-4f0c-9cd9-b441b1320d99" key="#[vars.authToken]" >
+			<os:value ><![CDATA[#[vars.accountInfo]]]></os:value>
+		</os:store>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="Copy_of_On Error Propagate" doc:id="dbb88a78-86d9-4436-94c3-eb7b210ce822" >
+				<set-payload value='#[{message: "Authentication failed"}]' doc:name="Copy_of_Set Payload" doc:id="1fd53706-6ed6-4892-b52c-9a560c3911f3" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="GetAccount" doc:id="8cb49e1c-2e34-4202-bae6-015ca1b22533" >
+		<set-variable value="#[attributes.headers.authToken]" doc:name="Set Variable" doc:id="447460bd-ccd7-4892-aa78-c5f91e0b0053" variableName="authToken" />
+		<flow-ref doc:name="Flow Reference" doc:id="49eb921c-ef50-4d87-8076-0c5566857a48" name="getLoggedIn(authToken)" />
+		<ee:transform doc:name="Transform Message" doc:id="15118c43-5d1e-4973-8750-32ad208a21b5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="Copy_of_On Error Propagate" doc:id="70b332a3-53a8-48df-bf2e-883f52bf2a20" >
+				<set-payload value='#[output application/json&#10;---&#10;{&#10;	statusCode: 401,&#10;	message: "Unauthorized"&#10;}]' doc:name="Copy_of_Set Payload" doc:id="80827306-735a-45d5-8abc-3a3485105bf2" mimeType="application/json" />
+			</on-error-propagate>
+		</error-handler>
 	</flow>
 </mule>

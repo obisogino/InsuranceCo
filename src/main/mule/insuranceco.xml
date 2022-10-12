@@ -157,6 +157,7 @@ output application/json
     </flow>
     <flow name="post:\account:application\json:insuranceco-config">
         <logger level="INFO" message="post:\account:application\json:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="c8afee46-507c-4a09-9ce4-c2b23dd50317" name="createUser"/>
     </flow>
     <flow name="post:\policies\car\claims:application\json:insuranceco-config">
         <flow-ref doc:name="Flow Reference" doc:id="ecda4db2-0f14-42e6-b1f3-1e31054172b5" name="ClaimsFlow" />
@@ -174,6 +175,7 @@ output application/json
     </flow>
     <flow name="post:\login:application\json:insuranceco-config">
         <logger level="INFO" message="post:\login:application\json:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="0e1100d0-0302-46f2-afaa-f6c086456204" name="Login"/>
     </flow>
     <flow name="post:\policies\travel\subscribe:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\travel\subscribe:application\json:insuranceco-config" />

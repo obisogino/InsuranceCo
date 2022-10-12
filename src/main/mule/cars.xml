@@ -8,7 +8,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<flow name="CarUnderwritingFlow" doc:id="574548ef-0195-4714-b095-2305b5c3332a" >
 		<set-variable value="#[payload]" doc:name="Set Variable cars" doc:id="ee894582-61c4-4966-98d0-6c0c23dc785a" variableName="cars" />
 		<set-variable value="#[0.02]" doc:name="Set Variable rate" doc:id="b5455772-ecc0-44c2-a8d9-62206500dfdf" variableName="rate" />
-		<java:invoke-static method="getFairMarketValue(int,int)" doc:id="b86cdad1-4652-41a8-a340-0da0a9800a57" class="insuranceco.CarComputationHelper" doc:name="Invoke getFarMarketValue" >
+		<java:invoke-static doc:id="b86cdad1-4652-41a8-a340-0da0a9800a57" class="insuranceco.CarComputationHelper" doc:name="Invoke getFarMarketValue" method="getFairMarketValue(int,int)">
 			<java:args ><![CDATA[#[{
 	assetValue: payload.assetValue,
 	yearModel: payload.year

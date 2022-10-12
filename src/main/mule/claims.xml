@@ -27,7 +27,7 @@ output application/java
 payload."0".payload]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<java:invoke-static method="getDeprecationFee(int,java.lang.String)" doc:id="953e0f5f-0c7a-4a59-b2a4-d80aabc097a5" class="insuranceco.CarComputationHelper" doc:name="Invoke static" >
+		<java:invoke-static doc:id="953e0f5f-0c7a-4a59-b2a4-d80aabc097a5" class="insuranceco.CarComputationHelper" doc:name="Invoke static" method="getDeprecationFee(int,java.lang.String)">
 			<java:args ><![CDATA[#[{
 	year: vars.cars.year,
 	primaryUsed: vars.cars.primaryUsed

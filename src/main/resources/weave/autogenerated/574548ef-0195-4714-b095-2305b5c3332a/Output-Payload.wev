@@ -1,25 +1,25 @@
 %dw 2.0
 
 type auto_574548ef_0195_4714_b095_2305b5c3332a_Output_Payload = {|
-  "Quotation No": Array<Any>, 
-  State: Null, 
-  Stage: Null, 
+  "Quotation No": Number, 
+  State: String | Null, 
+  Stage: String | Null, 
   "Car Info": {|
-    Brand: Null, 
-    Model: Null, 
-    Year: Null, 
-    Variant: Null, 
-    "Asset Value": Null, 
-    "Primary Used": Null
+    Brand: String | Null, 
+    Model: String | Null, 
+    Year: Number | Null, 
+    Variant: String | Null, 
+    "Asset Value": Number | Null, 
+    "Primary Used": String | Null
   |}, 
-  Premiums: Null, 
+  Premiums: Array<{|    Type: String | Null,     Coverage: Number | Null,     Price: Number | Null  |}>, 
   Summary: {|
-    "Premium Price": Array<Number>, 
-    "Doc. Stamps": Null, 
-    Price*: Null, 
-    "Local Government": Null, 
-    VAT: Null, 
-    "Total Premium": Null
+    "Premium Price": Number | Null, 
+    "Doc. Stamps": Number | Null, 
+    Price*: Number | Null, 
+    "Local Government": Number | Null, 
+    VAT: Number | Null, 
+    "Total Premium": Number | Null
   |}
 |}
 

@@ -8,7 +8,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<db:config name="Database_Config" doc:name="Database Config" doc:id="d61acac6-9b1d-4bba-8a66-17a5e6acfc15" >
-		<db:my-sql-connection host="localhost" port="3306" user="admin" password="admin" database="insurancedb" />
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="insurancedb" />
 	</db:config>
 	<os:object-store name="Object_store" doc:name="Object store" doc:id="f9a021c3-0be2-4b62-a4cc-3a1653d3f34d" />
 	<flow name="createUser" doc:id="dcf1bcde-1d3c-4ef1-943e-5b37796cea39" >

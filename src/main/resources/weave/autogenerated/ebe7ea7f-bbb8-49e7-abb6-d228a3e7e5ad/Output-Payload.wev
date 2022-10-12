@@ -1,0 +1,12 @@
+%dw 2.0
+
+type auto_ebe7ea7f_bbb8_49e7_abb6_d228a3e7e5ad_Output_Payload = {|
+  "Damage Cost": Number | Null, 
+  "Deductible Fee": Number | Null, 
+  "Depreciation Fee": Number | Null, 
+  "Participation Fee": Number | Null, 
+  "Insurance Fee": Number | Null, 
+  "Created At": String {"format": "MM/dd/yyyy"}, 
+  Status: String | Null
+|}
+

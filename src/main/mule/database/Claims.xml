@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="InsertClaimsFlow" doc:id="8e8f74c4-2fc4-484d-ba53-1a942e54dad3" >
+		<db:insert doc:name="Insert" doc:id="708d728b-3fa7-464d-b0fd-1cf775aa90b7" config-ref="Database_Config" autoGenerateKeys="true">
+			<db:sql ><![CDATA[INSERT INTO claims(policyId, amount, deductibleFee, depreciationFee, participationFee, companyFee, createdAt, status)
+VALUES(:policyId, :amount, :deductibleFee, :depreciationFee, :participationFee, :companyFee, :createdAt, :status)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+		<set-variable value="#[payload.generatedKeys.GENERATED_KEY]" doc:name="Set Variable" doc:id="f4a84fa9-b267-4a6c-ac60-219008df3fae" variableName="claim_id"/>
+		<db:query-single doc:name="Query single" doc:id="06bcc00a-2aff-4693-bfe5-6795de6ae2b5" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM claims
+WHERE claimId = :claimId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	claimId: vars.claim_id
+}]]]></db:input-parameters>
+		</db:query-single>
+	</flow>
+</mule>

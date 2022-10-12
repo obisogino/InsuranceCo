@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="InsertPaymentsFlow" doc:id="193d09d5-0f09-4a19-b259-dfc4676b7e21" >
+		<db:insert doc:name="Insert" doc:id="b966a071-fc9d-480a-be3e-d6cb34f2e9da" config-ref="Database_Config" autoGenerateKeys="true">
+			<db:sql ><![CDATA[INSERT INTO payments(policyId, amount, balance, remainingBalance, createdAt,status)
+VALUES(:policyId,:amount, :balance, :remainingBalance, :createdAt,:status)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyId: payload.policyId,
+	amount: payload.amount,
+	balance: payload.balance,
+	remainingBalance: payload.remainingBalance,
+	createdAt: now() as DateTime,
+	status: 'PAID'
+}]]]></db:input-parameters>
+		</db:insert>
+		<set-variable value="#[payload.generatedKeys.GENERATED_KEY]" doc:name="Set Variable" doc:id="263cd205-7ab1-4d6d-937d-31d866843a79" variableName="payment_id"/>
+		<db:query-single doc:name="Query single" doc:id="0b15a8f6-2fce-4ea9-b528-035d0dfad2f1" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM payments
+WHERE paymentId = :paymentId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	paymentId: vars.payment_id
+}]]]></db:input-parameters>
+		</db:query-single>
+	</flow>
+	<flow name="SelectPaymentsByPolicyFlow" doc:id="2a4301da-c87a-4d31-9b77-6a3198ae34be" >
+		<db:select doc:name="Select" doc:id="26304e9b-a629-472c-9971-3bcd80a7a56e" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM payments
+WHERE policyId = :policyId
+ORDER BY paymentId ASC]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+		</db:select>
+	</flow>
+</mule>

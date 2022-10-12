@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="CarUnderwritingFlow" doc:id="574548ef-0195-4714-b095-2305b5c3332a" >
+		<set-variable value="#[payload]" doc:name="Set Variable cars" doc:id="ee894582-61c4-4966-98d0-6c0c23dc785a" variableName="cars" />
+		<set-variable value="#[0.02]" doc:name="Set Variable rate" doc:id="b5455772-ecc0-44c2-a8d9-62206500dfdf" variableName="rate" />
+		<java:invoke-static method="getFairMarketValue(int,int)" doc:id="b86cdad1-4652-41a8-a340-0da0a9800a57" class="insuranceco.CarComputationHelper" doc:name="Invoke getFarMarketValue" >
+			<java:args ><![CDATA[#[{
+	assetValue: payload.assetValue,
+	yearModel: payload.year
+}]]]></java:args>
+		</java:invoke-static>
+		<set-variable value="#[payload]" doc:name="Set Variable fvmPrice" doc:id="9457c0e2-352d-4c89-9cfe-eee1dc267434" variableName="fvmPrice" />
+		<flow-ref doc:name="Flow Reference" doc:id="121da973-83ae-482c-8d70-84f4e0d979c5" name="InsertPoliciesFlow" />
+		<set-variable value="#[payload.generatedKeys.GENERATED_KEY]" doc:name="Set Variable" doc:id="4ff1bb00-0549-4543-89e4-bbeb37a56388" variableName="policy_id" />
+		<ee:transform doc:name="Transform Message" doc:id="c0d2ec15-1462-4b37-9db9-e8d1dff7aafb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	policyId: vars.policy_id,
+	brand: vars.cars.brand,
+	model: vars.cars.model,
+	year: vars.cars.year,
+	variant: vars.cars.variant,
+	primaryUsed: vars.cars.primaryUsed,
+	assetValue: vars.cars.assetValue
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="6c58c418-fb19-4b6c-9234-56ac8fd1aacf" name="CarsInsertFlow" />
+		<scatter-gather doc:name="Scatter-Gather" doc:id="277fe540-8893-47e0-95c5-b30b3d5d05b6" >
+			<route >
+				<ee:transform doc:name="Transform Message" doc:id="2d6f6b44-3c75-4a2b-8bdb-be33d5a465e1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+
+fun getPremiumPrice() = vars.fvmPrice * vars.rate
+
+var netPremium = getPremiumPrice() + 420 + 1245
+
+---
+[
+	{
+		coverageType: "Own Damage/Theft",
+		coverage: vars.fvmPrice,
+		price: 0,
+		policyId: vars.policy_id
+	},
+	{
+		coverageType: "Bodily Injury",
+		coverage: 200000,
+		price: 420,
+		policyId: vars.policy_id
+	},
+	{
+		coverageType: "Property Damage",
+		coverage: 200000,
+		price: 1245,
+		policyId: vars.policy_id
+	},
+	{
+		coverageType: "Personal Accident",
+		coverage: 250000,
+		price: 0,
+		policyId: vars.policy_id
+	},
+	{
+		coverageType: "Acts of Nature",
+		coverage: vars.fvmPrice,
+		price: getPremiumPrice(),
+		policyId: vars.policy_id
+	}
+]]]></ee:set-payload>
+					</ee:message>
+					<ee:variables />
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="b047c679-6bf6-4ba9-8a37-2032f4984b1b" name="CoveragesBulkInsertFlow" />
+			</route>
+			<route >
+				<ee:transform doc:name="Transform Message" doc:id="4075ff0d-41f7-45a9-9c3e-33115d3cdbef" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+fun getPremiumPrice() = vars.fvmPrice * vars.rate
+var netPremium = getPremiumPrice() + 420 + 1245
+fun getPercentageRate(percentage) = netPremium * (percentage / 100)
+
+var dsAmount = getPercentageRate(12.5)
+var lgtAmount = getPercentageRate(0.2)
+var vat_amount = getPercentageRate(12)
+var totalPremium = netPremium + dsAmount + lgtAmount + vat_amount
+
+---
+{
+	premiumPrice: netPremium,
+	dst_rate: 12.5,
+	dst_amount: dsAmount,
+	lgt_rate: 0.2,
+	lgt_amount: lgtAmount,
+	vat_rate: 12,
+	vat_amount: vat_amount,
+	totalPremium: totalPremium,
+	policyId: vars.policy_id
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="408f7ebd-8032-409b-8eea-2a0f62871394" name="UpdatePolicyFlow" />
+			</route>
+		</scatter-gather>
+		<flow-ref doc:name="Flow Reference" doc:id="33521bb6-412c-4fb4-8c47-651fdeb6d4dd" name="SelectPolicyWithDetailsFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="f581a900-5b2e-4634-8fd6-1247dd606c2a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var policy = payload."0".payload
+var car = payload."1".payload
+var coverage = payload."2".payload
+var subscriber = payload."3".payload
+---
+{
+	"Quotation No": policy.policyId,
+	"State": policy.state,
+	"Stage": policy.stage,
+	"Car Info": {
+		"Brand": car.brand,
+		"Model": car.model,
+		"Year": car.year,
+		"Variant": car.variant,
+		"Asset Value": car.assetValue,
+		"Primary Used": car.primaryUsed
+	},
+	"Premiums": coverage map {
+		"Type": $.coverageType,
+		"Coverage": $.coverage,
+		"Price": 	$.price
+	},
+	"Summary": {
+		"Premium Price": policy.price,
+		"Doc. Stamps": policy.dst_rate,
+		"Price": policy.dst_amount,
+		"Local Government": policy.lgt_rate,
+		"Price": policy.lgt_amount,
+		"VAT": policy.vat_rate,
+		"Price": policy.vat_amount,
+		"Total Premium": policy.totalPremium 
+	}
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

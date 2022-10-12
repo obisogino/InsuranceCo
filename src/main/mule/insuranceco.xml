@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
     <http:listener-config name="insuranceco-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
@@ -159,18 +159,18 @@ output application/json
         <logger level="INFO" message="post:\account:application\json:insuranceco-config" />
     </flow>
     <flow name="post:\policies\car\claims:application\json:insuranceco-config">
-		<flow-ref doc:name="Flow Reference" doc:id="ecda4db2-0f14-42e6-b1f3-1e31054172b5" name="ClaimsFlow"/>
-		<ee:transform doc:name="Transform Message" doc:id="198aba85-8907-42fa-8aa9-f1f29ceff86c" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+        <flow-ref doc:name="Flow Reference" doc:id="ecda4db2-0f14-42e6-b1f3-1e31054172b5" name="ClaimsFlow" />
+        <ee:transform doc:name="Transform Message" doc:id="198aba85-8907-42fa-8aa9-f1f29ceff86c">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
 	success: true,
 	data: payload
 }]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+            </ee:message>
+        </ee:transform>
     </flow>
     <flow name="post:\login:application\json:insuranceco-config">
         <logger level="INFO" message="post:\login:application\json:insuranceco-config" />
@@ -191,17 +191,49 @@ output application/json
         <logger level="INFO" message="post:\policies\retirement:multipart\form-data:insuranceco-config" />
     </flow>
     <flow name="post:\policies\car:insuranceco-config">
-		<flow-ref doc:name="Flow Reference" doc:id="60173ebb-4dd2-4d4b-9efa-cf532fb90af0" name="CarUnderwritingFlow"/>
-		<ee:transform doc:name="Transform Message" doc:id="1716f833-0ded-4b48-ba27-4865abe7ef5c" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+        <flow-ref doc:name="Flow Reference" doc:id="60173ebb-4dd2-4d4b-9efa-cf532fb90af0" name="CreateCarPolicyFlow" />
+        <ee:transform doc:name="Transform Message" doc:id="1716f833-0ded-4b48-ba27-4865abe7ef5c">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
 	success: true,
 	data: payload
 }]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\policies\car\quote:application\json:insuranceco-config">
+        <flow-ref doc:name="Flow Reference" doc:id="3a9cd834-affc-4d8f-9748-51077d68d397" name="CarUnderwritingFlow" />
+        <logger level="INFO" message="post:\policies\car\quote:application\json:insuranceco-config" />
+    </flow>
+    <flow name="post:\policies\car:application\json:insuranceco-config">
+        <logger level="INFO" message="post:\policies\car:application\json:insuranceco-config" />
+        <ee:transform doc:name="Transform Message" doc:id="0c75cfe0-27a8-44d2-b474-4330544848b6">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	data: payload
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\policies\car\payments:application\json:insuranceco-config">
+        <flow-ref doc:name="Flow Reference" doc:id="f182980d-1a5c-462f-9d57-5f77d297df82" name="CarPaymentFlow" />
+        <ee:transform doc:name="Transform Message" doc:id="36fc4286-0cbd-4f70-9c88-8ce003b9d19d">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	data: payload
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
     </flow>
 </mule>

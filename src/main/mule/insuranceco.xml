@@ -128,12 +128,34 @@ output application/json
     </flow>
     <flow name="get:\policies\hmo:insuranceco-config">
         <logger level="INFO" message="get:\policies\hmo:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="6141719d-7f82-4828-bc2e-5086fa3bf405" name="GetHMO"/>
     </flow>
     <flow name="get:\policies\travel\list:insuranceco-config">
         <logger level="INFO" message="get:\policies\travel\list:insuranceco-config" />
     </flow>
     <flow name="get:\policies\hmo\list:insuranceco-config">
         <logger level="INFO" message="get:\policies\hmo\list:insuranceco-config" />
+		<ee:transform doc:name="Transform Message" doc:id="b15621fd-c225-47b7-af70-f0995209d582" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+{
+	plan: "A",
+	details: "Covid and Dengue Affordable Coverage",
+	coverage: "P12,000",
+	"monthly premium": "P350"
+},
+{
+	plan: "B",
+	details: "Hospitalisation Premium Coverage",
+	coverage: "P120,000",
+	"monthly premium": "P4000"
+}
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
     </flow>
     <flow name="get:\policies\travel:insuranceco-config">
         <logger level="INFO" message="get:\policies\travel:insuranceco-config" />
@@ -157,7 +179,7 @@ output application/json
     </flow>
     <flow name="post:\account:application\json:insuranceco-config">
         <logger level="INFO" message="post:\account:application\json:insuranceco-config" />
-		<flow-ref doc:name="Flow Reference" doc:id="c8afee46-507c-4a09-9ce4-c2b23dd50317" name="createUser"/>
+        <flow-ref doc:name="Flow Reference" doc:id="c8afee46-507c-4a09-9ce4-c2b23dd50317" name="createUser" />
     </flow>
     <flow name="post:\policies\car\claims:application\json:insuranceco-config">
         <flow-ref doc:name="Flow Reference" doc:id="ecda4db2-0f14-42e6-b1f3-1e31054172b5" name="ClaimsFlow" />
@@ -175,23 +197,25 @@ output application/json
     </flow>
     <flow name="post:\login:application\json:insuranceco-config">
         <logger level="INFO" message="post:\login:application\json:insuranceco-config" />
-		<flow-ref doc:name="Flow Reference" doc:id="0e1100d0-0302-46f2-afaa-f6c086456204" name="Login"/>
+        <flow-ref doc:name="Flow Reference" doc:id="0e1100d0-0302-46f2-afaa-f6c086456204" name="Login" />
     </flow>
     <flow name="post:\policies\travel\subscribe:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\travel\subscribe:application\json:insuranceco-config" />
     </flow>
     <flow name="post:\policies\hmo\subscribe:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\hmo\subscribe:application\json:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="8075efe3-f65e-422a-bf6e-92b27ef4ae46" name="createHMOplan"/>
     </flow>
     <flow name="post:\policies\travel:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\travel:application\json:insuranceco-config" />
     </flow>
     <flow name="post:\policies\retirement\claim:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\retirement\claim:application\json:insuranceco-config" />
+        <flow-ref doc:name="Flow Reference" doc:id="e8f46f0d-ef1a-464b-a186-9525aedede89" name="claim" />
     </flow>
     <flow name="post:\policies\retirement:multipart\form-data:insuranceco-config">
         <logger level="INFO" message="post:\policies\retirement:multipart\form-data:insuranceco-config" />
-		<flow-ref doc:name="Flow Reference" doc:id="553257eb-59bf-4a53-816d-d912cf8f2421" name="createRetirementPolicy1"/>
+        <flow-ref doc:name="Flow Reference" doc:id="553257eb-59bf-4a53-816d-d912cf8f2421" name="createRetirementPolicy1" />
     </flow>
     <flow name="post:\policies\car:insuranceco-config">
         <flow-ref doc:name="Flow Reference" doc:id="60173ebb-4dd2-4d4b-9efa-cf532fb90af0" name="CreateCarPolicyFlow" />

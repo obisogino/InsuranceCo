@@ -194,4 +194,82 @@ vars.matrix map{
 		</scatter-gather>
 		<set-payload value='#[output application/json&#10;---&#10;//flatten([payload[1].payload])&#10;{message: "Policy Created"}]' doc:name="Set Payload" doc:id="d5fc7014-ed88-464c-8b08-b9f80222bf8f" />
 	</flow>
+	<flow name="claim" doc:id="bb113db7-1acb-4561-a014-a696583d38e7" >
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="f97a51dd-8a50-4a9d-9f23-39078e13a949" variableName="inpt" mimeType="application/json" />
+		<set-variable value="#[attributes.headers.authToken]" doc:name="Set Variable authToken" doc:id="f45f722b-ac5f-45ba-a6af-42233c9a956b" variableName="authToken" />
+		<flow-ref doc:name="Flow Reference" doc:id="f8bc50b5-c1e5-4ea3-8e2c-d4b312369db1" name="getLoggedIn(authToken)" />
+		<db:query-single doc:name="Copy_of_Query POLICYRETIREMENT" doc:id="a890a67b-43e0-494f-b312-b19b396e464b" config-ref="Database_Config">
+					<db:sql><![CDATA[select * from policyretirement where policyNumber = :policyNumber]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	policyNumber: vars.inpt.policyNumber
+	
+}]]]></db:input-parameters>
+				</db:query-single>
+		<set-payload value="#[output application/json --- &#10;payload]" doc:name="Copy_of_Set Payload" doc:id="6f741feb-74d9-4627-ad31-7bc612ff5ad5" />
+		<set-variable value="#[output application/json&#10;---&#10;flatten([payload[0].payload])[0]]" doc:name="Copy_of_Set Variable carPolicy" doc:id="907a084e-e1dd-4545-960d-8a20b6f794b1" variableName="carPolicy" />
+		<set-variable value="#[output application/json&#10;---&#10;flatten([payload[1].payload])[0]]" doc:name="Copy_of_Set Variable retirementPolicy" doc:id="234aa93e-90d0-4c4c-bace-15bff6183969" variableName="retirementPolicy" />
+		<flow-ref doc:name="Copy_of_Flow Reference" doc:id="d6adc0a3-9352-42fe-a0d9-046f7c05d3a7" name="claimRetirement" />
+	</flow>
+	<flow name="claimRetirement" doc:id="0ee6d179-e111-4b46-887a-45fe86adfe21">
+		<logger level="INFO" doc:name="Copy_of_Logger" doc:id="a6f48756-6703-465e-a3cd-bc62b4010c42" />
+		<db:select doc:name="Copy_of_policyretirement" doc:id="38bab169-de36-4995-9b46-6e79ba6e21c3" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from policyretirement where policyNumber = :policyNumber]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	policyNumber: vars.inpt.policyNumber
+}]]]></db:input-parameters>
+		</db:select>
+		<set-variable value="#[payload[0]]" doc:name="Copy_of_Set Variable" doc:id="fe29dad5-371d-43e7-a9be-35d03a64588e" variableName="policy" />
+		<db:select doc:name="Copy_of_bill" doc:id="411f9363-18f1-4a09-b3b2-a0020eac9300" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from bill where policyNumber = :policyNumber and isSettled = :isSettled]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	policyNumber: vars.inpt.policyNumber,
+	isSettled : 1
+}]]]></db:input-parameters>
+		</db:select>
+		<set-variable value="#[payload]" doc:name="Copy_of_paidBills" doc:id="64a6d356-4262-436e-b555-76358f541248" variableName="paidBills" />
+		<set-variable value="#[output application/json&#10;---&#10;sizeOf(vars.paidBills)]" doc:name="Copy_of_paidYears" doc:id="d378363a-40bb-4b95-9389-74152d4de2c5" variableName="paidYears" />
+		<db:select doc:name="Copy_of_matrix" doc:id="060e0040-2324-4c03-bbd2-3a518020f7d4" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from policyretirementmatrix where policyNumber = :policyNumber and year = :year]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	policyNumber: vars.inpt.policyNumber,
+	year: vars.paidYears
+}]]]></db:input-parameters>
+		</db:select>
+		<set-variable value="#[payload[0]]" doc:name="Copy_of_Set Variable" doc:id="445de169-bb8b-4c63-b176-cf480190fc08" variableName="matrix" />
+		<choice doc:name="Copy_of_Choice" doc:id="e52bf930-c1c7-4596-b248-91d9ea295229">
+			<when expression="#[vars.matrix.claimable &gt; 0]">
+				<db:update doc:name="Copy_of_Copy_of_Update" doc:id="3a127f9e-4c23-441e-a2c1-d6b315290c80" config-ref="Database_Config">
+					<db:sql><![CDATA[update policyretirement
+set
+	isActive = :isActive,
+	status = :status
+where 
+	policyNumber = :policyNumber
+]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	isActive: 0,
+	policyNumber: vars.inpt.policyNumber,
+	status: "claimed"
+}]]]></db:input-parameters>
+				</db:update>
+				<set-variable value="#[output application/json&#10;---&#10;vars.accountInfo.insuranceWallet as Number + vars.matrix.claimable as Number]" doc:name="Copy_of_newWallet" doc:id="4da040c0-ee51-4d3b-b723-3f677fab01c4" variableName="newWallet" />
+				<db:update doc:name="Copy_of_useraccount insuranceWallet" doc:id="37c8378c-39cb-4d79-9418-2cf1fd1c12f9" config-ref="Database_Config">
+					<db:sql><![CDATA[update useraccount
+set
+	insuranceWallet = :insuranceWallet
+where 
+	username = :username
+]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	insuranceWallet: vars.newWallet,
+	username: vars.accountInfo.username
+}]]]></db:input-parameters>
+				</db:update>
+				<set-payload value='#[output application/json&#10;---&#10;{&#10;	message: "claimed " ++ vars.matrix.claimable as String ++ " and was added to your insurance wallet."&#10;}]' doc:name="Copy_of_Set Payload" doc:id="2a7f907f-fdbb-42df-970e-46d796483d42" />
+			</when>
+			<otherwise>
+				<set-payload value='#[{message: "No Claimable"}]' doc:name="Copy_of_Set Payload" doc:id="c9d34d55-5e1c-4cef-8e72-54e93ebb1b35" />
+			</otherwise>
+		</choice>
+	</flow>
 </mule>

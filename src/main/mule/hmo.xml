@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="createHMOplan" doc:id="297a6931-334a-4fe0-9e62-eedc8342e81d" >
+		<set-variable value="#[payload.subscribeTo]" doc:name="Set Variable" doc:id="3bfd2319-e59f-4371-9212-f47caa8b1b75" variableName="subscribeTo" />
+		<set-variable value="#[attributes.headers.authToken]" doc:name="Set Variable authToken" doc:id="76f3dff0-d2e5-486f-83ae-a572b77f904d" variableName="authToken" />
+		<flow-ref doc:name="Copy_of_Flow Reference" doc:id="2dbf1aa1-58fa-4fd7-85a4-6154de89e7bd" name="getLoggedIn(authToken)" />
+		<choice doc:name="Choice" doc:id="ba2e3d7a-c68f-4f0f-8a06-053999963cc0" >
+			<when expression='#[vars.subscribeTo == "A" or vars.subscribeTo == "a"]'>
+				<flow-ref doc:name="Flow Reference" doc:id="586c4d69-da34-43bb-bd47-c80bf8a4a44a" name="HMOPlanA"/>
+			</when>
+			<when expression='#[vars.subscribeTo == "B" or vars.subscribeTo == "b"]'>
+				<flow-ref doc:name="Flow Reference" doc:id="e72ceebc-4083-4625-bc97-985f0850ec38" name="HMOPlanB"/>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="b8d00ace-0cf7-44c1-a670-054774f1a7bf" type="API:SUBS"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d38a7a34-15fd-4644-bf9e-879dc1259d25" type="API:SUBS">
+				<set-payload value='#[output application/json ---&#10;{&#10;	code: 400,&#10;	message: "Error on Subscription Choices"&#10;}]' doc:name="Set Payload" doc:id="c7fb320e-2110-4e06-a5e1-39602e125f5f" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<sub-flow name="HMOPlanA" doc:id="52bb5277-f11a-475d-860b-55afe8e033a4" >
+		<set-variable value='#[(random() * 1000000) as String {format: "000000"}]' doc:name="Set Variable" doc:id="d22d7731-16d0-4d6d-8d69-bf29acb1eae2" variableName="policyNumber" />
+		<ee:transform doc:name="Transform Message" doc:id="f71620e9-9561-4dc7-ae64-11a4598a669e">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="planA"><![CDATA[%dw 2.0
+output application/json
+---
+{
+plan: "A",
+coverage : 12000,
+termsInMonth : 12,
+premiumPerMonth : 350,
+policyNumber: vars.policyNumber, 
+username: vars.accountInfo.username
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="e69fabaa-1748-440b-8835-0e8d27b4aada" config-ref="Database_Config">
+			<db:sql><![CDATA[insert into hmo(
+plan,
+username,
+policyNumber,
+coverage,
+termsInMonth,
+premiumPerMonth) values(
+:plan,
+:username,
+:policyNumber,
+:coverage,
+:termsInMonth,
+:premiumPerMonth)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.planA]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="bill" doc:id="613cf1f5-728f-4e00-8ad1-9a1b79741c01">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="bill" ><![CDATA[%dw 2.0
+output application/java
+---
+[
+	{
+		month: 1,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P1M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 2,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P2M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 3,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P3M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 4,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P4M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+		},	{
+		month: 5,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P5M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 6,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P6M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 7,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P7M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 8,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P8M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 9,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P9M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 10,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P10M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 11,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P11M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 12,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P12M|,
+		isSettled: false,
+		amountToPay: 350,
+		policyNumber: vars.policyNumber
+	}
+]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk insert" doc:id="6aef1d50-e448-4658-bada-16715152b44b" config-ref="Database_Config">
+			<db:bulk-input-parameters ><![CDATA[#[vars.bill]]]></db:bulk-input-parameters>
+			<db:sql ><![CDATA[insert into bill(
+amountToPay,
+policyNumber,
+referenceNumber,
+notificationDate,
+isSettled,
+month) values (
+:amountToPay,
+:policyNumber,
+:referenceNumber,
+:notificationDate,
+:isSettled,
+:month)]]></db:sql>
+		</db:bulk-insert>
+		<set-payload value='#[output application/json ---&#10;{&#10;	status:200,&#10;	message: "Covid and Dengue protection policy created"&#10;}]' doc:name="Set Payload" doc:id="52163b39-6cfc-49ea-85f9-554b931e6ed3" />
+	</sub-flow>
+	<sub-flow name="HMOPlanB" doc:id="08f0d098-28f4-4160-ad21-c2b9b676ec6f" >
+		<set-variable value='#[(random() * 1000000) as String {format: "000000"}]' doc:name="Copy_of_Set Variable" doc:id="2d9effb6-4617-4a48-ae17-5ffa380fdcdd" variableName="policyNumber" />
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="e976626d-b1e8-4ff0-87be-a03e6a8ed00e" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="planA" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+plan: "B",
+coverage : 120000,
+termsInMonth : 12,
+premiumPerMonth : 4000,
+policyNumber: vars.policyNumber, 
+username: vars.accountInfo.username
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Copy_of_Insert" doc:id="79aad321-c453-42bb-8acf-694efdcbda67" config-ref="Database_Config" >
+			<db:sql ><![CDATA[insert into hmo(
+plan,
+username,
+policyNumber,
+coverage,
+termsInMonth,
+premiumPerMonth) values(
+:plan,
+:username,
+:policyNumber,
+:coverage,
+:termsInMonth,
+:premiumPerMonth)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.planA]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Copy_of_bill" doc:id="aac984b9-d73c-4a7d-8de7-57982fcddca1" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="bill" ><![CDATA[%dw 2.0
+output application/java
+---
+[
+	{
+		month: 1,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P1M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 2,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P2M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 3,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P3M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 4,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P4M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+		},	{
+		month: 5,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P5M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 6,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P6M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 7,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P7M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 8,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P8M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 9,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P9M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 10,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P10M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 11,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P11M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	},	{
+		month: 12,
+		referenceNumber:  (random() * 1000000) as String {format: "000000"},
+		notificationDate: now() + |P12M|,
+		isSettled: false,
+		amountToPay: 4000,
+		policyNumber: vars.policyNumber
+	}
+]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:bulk-insert doc:name="Copy_of_Bulk insert" doc:id="c2fcee98-d5c2-4088-b1be-d045e3d32596" config-ref="Database_Config" >
+			<db:bulk-input-parameters ><![CDATA[#[vars.bill]]]></db:bulk-input-parameters>
+			<db:sql ><![CDATA[insert into bill(
+amountToPay,
+policyNumber,
+referenceNumber,
+notificationDate,
+isSettled,
+month) values (
+:amountToPay,
+:policyNumber,
+:referenceNumber,
+:notificationDate,
+:isSettled,
+:month)]]></db:sql>
+		</db:bulk-insert>
+		<set-payload value='#[output application/json ---&#10;{&#10;	status:200,&#10;	message: "120K HMO Coverage created"&#10;}]' doc:name="Copy_of_Set Payload" doc:id="24345ed5-e282-4db6-9b07-8b11f81b150d" />
+	</sub-flow>
+	<flow name="GetHMO" doc:id="347223d2-2040-4927-839b-3beb6ec4f1dc" >
+		<set-variable value="#[attributes.headers.authToken]" doc:name="Copy_of_Set Variable authToken" doc:id="f695db77-ed82-4dec-9093-312c4a057987" variableName="authToken" />
+		<flow-ref doc:name="Copy_of_Copy_of_Flow Reference" doc:id="9a4a1568-97fe-4831-819d-437c46ab0abc" name="getLoggedIn(authToken)" />
+		<db:select doc:name="Select" doc:id="f57d42bb-33a7-433b-9127-b2d6e9555f2e" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from hmo where username = :username]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{username: vars.accountInfo.username}]]]></db:input-parameters>
+		</db:select>
+		<set-payload value="#[output application/json --- &#10;payload]" doc:name="Set Payload" doc:id="1a897125-2f22-4f52-bf6f-123a4d82e2ba" />
+	</flow>
+</mule>

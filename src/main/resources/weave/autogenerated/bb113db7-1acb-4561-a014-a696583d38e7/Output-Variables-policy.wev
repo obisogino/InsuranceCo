@@ -1,0 +1,17 @@
+%dw 2.0
+
+type auto_bb113db7_1acb_4561_a014_a696583d38e7_Output_Variables_policy = {|
+  id: Number, 
+  username: String, 
+  benefit?: Number, 
+  retirementAge?: Number, 
+  beneficiaryName?: String, 
+  beneficiaryIdNum?: String, 
+  policyNumber?: String, 
+  isActive?: Boolean, 
+  expiration?: String, 
+  policyMatrix?: Any, 
+  annualPremium?: Number, 
+  status?: String
+|}
+

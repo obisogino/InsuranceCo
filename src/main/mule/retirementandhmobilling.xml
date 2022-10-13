@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="CreateBill" doc:id="7bc130c6-fd70-4c90-8505-4e64c992838b" >
+		<db:listener table="policyretirementmatrix" doc:name="Copy_of_Copy_of_On Table Row" doc:id="3247c1e1-37d0-481e-b230-c36da0036282" config-ref="Database_Config" >
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</db:listener>
+		<set-payload value="#[payload]" doc:name="Copy_of_Copy_of_Set Payload" doc:id="c53a9084-61ad-49d8-af2a-28e45fed6cdb" />
+		<ee:transform doc:name="Copy_of_Copy_of_Transform Message" doc:id="7f063020-9de4-4b96-afef-5027cfcf933b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	amountToPay: payload.annualPremium,
+	policyNumber: payload.policyNumber,
+	year: payload.year as Number + 2022,
+	referenceNumber:  (random() * 1000000) as String {format: "000000"}
+
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Copy_of_Copy_of_Insert" doc:id="ffa6de4c-4435-499a-b89a-d32ed50861ab" config-ref="Database_Config" >
+			<db:sql ><![CDATA[insert into bill(
+	amountToPay,
+	policyNumber,
+	year,
+	referenceNumber
+) values (
+	:amountToPay,
+	:policyNumber,
+	:year,
+	:referenceNumber
+)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+</mule>

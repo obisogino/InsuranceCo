@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="65ab7195-d168-4639-bd03-c3f95b1e57d1" >
+		<jms:active-mq-connection username="admin" password="admin">
+			<jms:factory-configuration brokerUrl="tcp://DESKTOP-TS7DLAU:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="260be876-bd43-4465-ac0b-29f5d56f4c24" >
+		<email:smtp-connection host="smtp.gmail.com" user="ronnelbedana2014@gmail.com" port="587" password="ojlmbqhgxssxfgsb">
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<flow name="notificationFlow" doc:id="a4714b53-c75e-4afa-b1ef-e734dbfbf8de" >
+		<jms:listener doc:name="On New Message" doc:id="2f63e4c1-0faf-414b-b3f6-aa631312e5e4" config-ref="JMS_Config" destination="emailQueue" numberOfConsumers="1" inboundContentType="application/json">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+			<jms:response persistentDelivery="true" outboundContentType="application/json"/>
+		</jms:listener>
+		<ee:transform doc:name="Transform Message" doc:id="42398abf-c46f-4acd-8990-dc40c00c8e57" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="b8afa176-bfd6-4efb-9e78-44ee5c7459ba" message="#[payload]"/>
+		<email:send doc:name="Send" doc:id="23a5bd99-98c2-400f-b37c-9b2d4b6992a7" config-ref="Email_SMTP" fromAddress="ronnelbedana2014@gmail.com" subject="#[payload.subject]">
+			<email:to-addresses >
+				<email:to-address value="#[payload.email as String]" />
+			</email:to-addresses>
+			<email:body contentType="text/plain">
+				<email:content ><![CDATA[#[payload.content]]]></email:content>
+			</email:body>
+		</email:send>
+	
+</flow>
+</mule>

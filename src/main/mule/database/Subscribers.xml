@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="InsertSubscribersFlow" doc:id="aedf0fbd-d488-4782-bb9e-2aff4a3d36e1" >
+		<db:insert doc:name="Insert" doc:id="21687d10-b8fb-4e27-a905-747df7b0ff35" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO subscribers(firstName,middleName,lastName,email,birthdate,age,mobileNo,landline,addressLine1,addressLine2,city,zipCode,state,policyId)
+VALUES(:firstName,:middleName,:lastName,:email,:birthdate,:age,:mobileNo,:landline,:addressLine1,:addressLine2,:city,:zipCode,:state,:policyId)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+import * from dw::core::Periods
+output application/java
+var subs = payload.subscriber
+
+var dob = subs.birthdate as Date {format : "yyyy-MM-dd"}
+var today = now() as Date {format : "yyyy-MM-dd"}
+---
+{
+	policyId: payload.policyId,
+	firstName: subs.firstName,
+	middleName: subs.middleName,
+	lastName: subs.lastName,
+	email: subs.email,
+	birthdate: subs.birthdate,
+	age: between(today,dob).years,
+	mobileNo: subs.mobileNo,
+	landline: subs.landline,
+	addressLine1: subs.address.addressLine1,
+	addressLine2: subs.address.addressLine2,
+	city: subs.address.city,
+	zipCode: subs.address.zipCode,
+	state: subs.address.state
+}]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+</mule>

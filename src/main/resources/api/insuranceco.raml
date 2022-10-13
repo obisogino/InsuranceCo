@@ -120,15 +120,64 @@ types:
         authToken:
           type: string
           required: true
+      body:
+        type: any
       responses:
         200:
         503:
           body:
             type: CustomError
+    
+    /quote:
+      post:
+        headers:
+          authToken:
+            type: string
+            required: true
+        body:
+          type: any
+        responses:
+          200:
+            body: 
+              type: any
+          503:
+            body:
+              type: CustomError
+              
     /{policyNumber}/claims:
       get:
         responses:
           200:
+          503:
+            body:
+              type: CustomError
+    /claims:
+      post:
+        headers:
+          authToken:
+            type: string
+            required: true
+        body:
+          type: any
+        responses:
+          200:
+            body:
+              type: any
+          503:
+            body:
+              type: CustomError
+    /payments:
+      post:
+        headers:
+          authToken:
+            type: string
+            required: true
+        body:
+          type: any
+        responses:
+          200:
+            body:
+              type: any
           503:
             body:
               type: CustomError
@@ -151,7 +200,22 @@ types:
   /travel:
     get:
       description: Get Subscribed Travel Insurance
-
+    
+    post:
+      headers:
+        authToken:
+          type: string
+          required: true
+      body:
+        type: any
+      responses:
+        200:
+          body:
+            type: any
+        503:
+          body:
+            type: CustomError
+     
     /subscribe:
       post:
         headers:

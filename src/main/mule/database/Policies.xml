@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="InsertPoliciesFlow" doc:id="beea0a9d-1aba-4860-8078-c44e16c14ba5" >
+		<db:insert doc:name="Insert" doc:id="2f98c86d-3f26-4514-98c8-4c570af4d7ee" config-ref="Database_Config" autoGenerateKeys="true">
+			<db:sql ><![CDATA[INSERT INTO policies(policyType, price, createdAt, state, stage)
+VALUES(:policyType, :price, :createdAt, :state, :stage)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyType: 'car',
+	price: vars.fvmPrice,
+	createdAt: now(),
+	state: "QUOTE",
+	stage: "IN_PROGRESS"
+}]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+	<flow name="UpdatePolicyFlow" doc:id="e39b35c7-1e42-43ca-b7ee-a36bb663ad70" >
+		<db:update doc:name="Update" doc:id="211e43df-f1fa-4547-9424-058f1c9a4179" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE policies SET premiumPrice = :premiumPrice, dst_rate = :dst_rate, 
+dst_amount = :dst_amount, lgt_rate = :lgt_rate, lgt_amount = :lgt_amount,
+vat_rate = :vat_rate, vat_amount = :vat_amount, totalPremium = :totalPremium
+WHERE policyId = :policyId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:update>
+	</flow>
+	<flow name="SelectPolicyWithDetailsFlow" doc:id="1c7f4030-fb86-47f9-b430-8651873a7e05" >
+		<scatter-gather doc:name="Scatter-Gather" doc:id="295c0a2c-6906-4be5-9c39-657903d2adb0" >
+			<route >
+				<db:query-single doc:name="Query single" doc:id="9f01ea0c-89d8-4ccd-a5ea-1b068f64524a" config-ref="Database_Config">
+					<db:sql ><![CDATA[select * from policies where
+policyId = :policyId]]></db:sql>
+					<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+				</db:query-single>
+			</route>
+			<route >
+				<db:query-single doc:name="Query single" doc:id="d4af75af-9a9b-46ef-ba0a-4d6c048cf457" config-ref="Database_Config">
+					<db:sql ><![CDATA[select * from cars
+where policyId = :policyId]]></db:sql>
+					<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+				</db:query-single>
+			</route>
+			<route >
+				<db:select doc:name="Select" doc:id="4a188028-6f43-4c6c-9e80-e71bcc341f9b" config-ref="Database_Config">
+					<db:sql><![CDATA[select * from coverages
+where policyId = :policyId
+]]></db:sql>
+					<db:input-parameters><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+				</db:select>
+			</route>
+			<route >
+				<db:query-single doc:name="Query single" doc:id="ad512b1c-2db7-4858-b8d1-75dbacfaa8e5" config-ref="Database_Config">
+					<db:sql ><![CDATA[SELECT * FROM subscribers
+WHERE policyId = :policyId]]></db:sql>
+					<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+				</db:query-single>
+			</route>
+		</scatter-gather>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="48a98c40-40d2-4ac8-862a-55c5a5e6f919" />
+	</flow>
+	<flow name="UpdatePoliciesPaymentOptionFlow" doc:id="397a5476-f429-4483-8360-8768aac1ab3e" >
+		<db:update doc:name="Update" doc:id="b6be5332-e15a-425e-b718-ccb89ec47cd2" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE policies SET paymentOption = :paymentOption, state = :state, stage = :stage,
+balance = :balance, expiredAt = :expiredAt
+WHERE policyId = :policyId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+import years from dw::core::Periods
+output application/java
+var expiry = now() as Date + years(1)
+---
+{
+	paymentOption: payload.paymentOption,
+	balance: payload.totalPremium,
+	state: "POLICY",
+	stage: "ACTIVE",
+	expiredAt: expiry,
+	policyId: payload.policyId
+}]]]></db:input-parameters>
+		</db:update>
+	</flow>
+	<flow name="SelectSinglePolicyFlow" doc:id="445f45c8-cc5c-448b-bcc0-ef258e9ddc53" >
+		<db:query-single doc:name="Query single" doc:id="6bc82961-4d80-4c70-a2cf-fdc9cf4a7781" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM policies
+WHERE policyId = :policyId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+		</db:query-single>
+	</flow>
+	<flow name="UpdatePoliciesStatusFlow" doc:id="7b94a2ac-4970-4c9d-bdf4-5005b338c3cb" >
+		<db:update doc:name="Update" doc:id="4ca04d58-3b73-4d2a-ad4d-c7b789bd78e8" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE policies SET isFullyPaid = :isFullyPaid, updatedAt = :updatedAt, balance = :balance, nextDueDate = :nextDueDate
+WHERE policyId = :policyId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+import days from dw::core::Periods
+output application/java
+---
+{
+	isFullyPaid: if (payload.remainingBalance <=0) true else false,
+	updatedAt: now() as DateTime,
+	balance: payload.remainingBalance default 0,
+	nextDueDate: now() + days(31),
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+		</db:update>
+	</flow>
+	<flow name="PoliciesExpiredFlow" doc:id="4ac0f00c-fd49-442c-81f1-1be716f581b2" >
+		<db:update doc:name="Update" doc:id="18dcba83-b454-4c48-b1a5-b508d4186115" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE policies SET updatedAt = :updatedAt, stage = :stage
+WHERE policyId = :policyId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	updatedAt: now() as DateTime,
+	stage: 'EXPIRED',
+	policyId: vars.policy_id
+}]]]></db:input-parameters>
+		</db:update>
+	</flow>
+</mule>

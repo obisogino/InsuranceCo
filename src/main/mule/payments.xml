@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<flow name="CarPaymentFlow" doc:id="a6fec4d7-46e9-4eda-95af-4d816d9df9d1" >
+		<set-variable value="#[payload.policyId]" doc:name="Set Variable" doc:id="03cc17c0-fddf-435e-9228-2b3f04c088b2" variableName="policy_id" />
+		<set-variable value="#[payload.amount]" doc:name="Set Variable" doc:id="762fe4a2-e3d5-4b5c-9097-b5f8a355804b" variableName="amount" />
+		<flow-ref doc:name="Flow Reference" doc:id="b2e44427-9c7b-40f3-bd29-d74ef87db53a" name="SelectSinglePolicyFlow" />
+		<validation:is-true doc:id="cc075fa7-963b-4304-be7f-045af4eff814" expression="#[payload.isFullyPaid  == 0]" message="Policy was already fully paid!" doc:name="Is true" />
+		<ee:transform doc:name="Transform Message" doc:id="770fadd5-b0e1-4778-b19e-fe109506cf90" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	policyId: vars.policy_id,
+	balance: (payload.balance default 0),
+	amount: vars.amount,
+	remainingBalance: (payload.balance default 0) - (vars.amount default 0)
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="154d70bc-bbc8-47af-8126-499397d2b501" >
+			<route >
+				<flow-ref doc:name="Flow Reference" doc:id="dc40e734-172d-45cd-9d5a-20fb9b60d662" name="InsertPaymentsFlow" />
+			</route>
+			<route >
+				<flow-ref doc:name="Flow Reference" doc:id="3ab55afd-5d92-44fe-91e8-d49460d655d6" name="UpdatePoliciesStatusFlow" />
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="f0f5b660-afb1-4cc0-aedb-29bf174d3017" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var payment = payload."0".payload
+---
+{
+	"Payment Id": payment.paymentId,
+	"Balance": payment.balance,
+	"Amount Due": payment.amount,
+	"Remaining Balance": payment.remainingBalance,
+	"Status": payment.status,
+	"Payment Date": payment.createdAt as String { format: "MM/dd/yyyy"}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="Copy_of_On Error Propagate" doc:id="a4b5d8b9-567c-41ba-af7e-416c2137b89a" type="VALIDATION:INVALID_BOOLEAN" >
+				<ee:transform doc:name="Transform Message" doc:id="5a2e0f6c-9745-417e-b30e-cf5ca8927b60" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: false,
+	description: error.description
+
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

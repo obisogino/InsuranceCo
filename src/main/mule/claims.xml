@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<flow name="ClaimsFlow" doc:id="ebe7ea7f-bbb8-49e7-abb6-d228a3e7e5ad" >
+		<set-variable value="#[payload.amount]" doc:name="Set Variable amount" doc:id="fce8fcf5-6c90-43f9-bed0-a007b950e8dd" variableName="amount" />
+		<set-variable value="#[payload.policyId]" doc:name="Set Variable policy_id" doc:id="6f7f1ec0-d957-4c4e-a76e-89bd19d8bb7e" variableName="policy_id" />
+		<flow-ref doc:name="Flow Reference" doc:id="e4a48b6c-104f-4485-8327-e48d794023b6" name="SelectPolicyWithDetailsFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="ea4935ea-a510-4140-a257-29a93aa7eee3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="cars" ><![CDATA[%dw 2.0
+output application/java
+---
+payload."1".payload]]></ee:set-variable>
+				<ee:set-variable variableName="policy" ><![CDATA[%dw 2.0
+output application/java
+---
+payload."0".payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<java:invoke-static doc:id="953e0f5f-0c7a-4a59-b2a4-d80aabc097a5" class="insuranceco.CarComputationHelper" doc:name="Invoke static" method="getDeprecationFee(int,java.lang.String)">
+			<java:args ><![CDATA[#[{
+	year: vars.cars.year,
+	primaryUsed: vars.cars.primaryUsed
+}]]]></java:args>
+		</java:invoke-static>
+		<set-variable value="#[payload]" doc:name="Set Variable depreciationPercent" doc:id="1ce40bb3-7e3a-413c-a600-df526a1a8a57" variableName="depreciationPercent" />
+		<ee:transform doc:name="Transform Message" doc:id="557c72f5-0f0e-4f27-9bb4-d84af8f9cf85" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+
+var percentage = if (vars.cars.primaryUsed as String == "private") 0.005 else 0.01
+var minimumDeductible = if (vars.cars.primaryUsed as String == "private") 2000 else 3000
+
+var deductibleFee = vars.policy.price as Number * percentage
+var finalDeductible = if (deductibleFee > minimumDeductible) deductibleFee else minimumDeductible
+
+var depreciationFee = vars.amount as Number * vars.depreciationPercent
+var participationFee = finalDeductible + depreciationFee
+---
+{
+	policyId: vars.policy_id,
+	amount: vars.amount,
+	deductibleFee: finalDeductible,
+	depreciationFee: depreciationFee,
+	participationFee: participationFee,
+	companyFee: vars.amount - participationFee as Number,
+	createdAt: now() as DateTime,
+	status: "COMPLETE"
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="a363607b-e5ea-46c5-b3c1-0bb128a20dc2" name="InsertClaimsFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="5faebf4a-80a2-47ca-9df0-31a52b0c50f3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Damage Cost": payload.amount,
+	"Deductible Fee": payload.deductibleFee,
+	"Depreciation Fee": payload.depreciationFee,
+	"Participation Fee": payload.participationFee,
+	"Insurance Fee": payload.companyFee,
+	"Created At": payload.createdAt as String { format: "MM/dd/yyyy"},
+	"Status": payload.status
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

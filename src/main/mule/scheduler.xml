@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<flow name="SchedulerDueDateControllerFlow" doc:id="18e8964e-ce5a-4bff-bf75-6ed29ef5f96f" >
+		<scheduler doc:name="Scheduler" doc:id="306a1e6f-054c-49fe-b7e8-d0703f3928d4" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="5000" />
+			</scheduling-strategy>
+		</scheduler>
+		<db:select doc:name="Select" doc:id="391051c7-8ef5-4139-9727-784cb6282be5" config-ref="Database_Config" >
+			<db:sql ><![CDATA[SELECT * FROM policies
+WHERE stage = 'ACTIVE'
+AND isFullyPaid = 0
+]]></db:sql>
+		</db:select>
+		<foreach doc:name="For Each" doc:id="f4dbaf0f-5998-46a1-abc1-8e1ed7a839bc" >
+			<set-variable value="#[payload.policyId]" doc:name="Set Variable" doc:id="c080b697-18ba-4520-8433-eff13765791d" variableName="policy_id" />
+			<flow-ref doc:name="Flow Reference" doc:id="510c0619-565d-45a3-8b21-d5b77696dece" name="SelectPolicyWithDetailsFlow" />
+			<ee:transform doc:name="Transform Message" doc:id="d444d4d8-beda-46ca-aed6-0f55ac1f9727" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var subs = payload."3".payload
+---
+{
+	email: subs.email,
+	subject: "Payment Due date",
+	content: "Hello, " ++ subs.firstName as String ++ ", I would like to inform you about your incoming payment. Thank you."
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="subscriber" ><![CDATA[%dw 2.0
+output application/java
+---
+payload."3".payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<jms:publish doc:name="Publish" doc:id="a4d7d6b5-0da2-4b5f-85b8-08ddc6067e8c" config-ref="JMS_Config" destination="emailQueue" persistentDelivery="true" >
+				<jms:message outboundContentType="application/json" />
+			</jms:publish>
+		</foreach>
+	</flow>
+	<flow name="SchedulerExpiryControllerFlow" doc:id="e4fefdb6-4c5a-4a0e-9f91-0b0a984aa21c" >
+		<scheduler doc:name="Scheduler" doc:id="74af3600-235d-4a3a-8774-6ef084c05fb0" >
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</scheduler>
+		<db:select doc:name="Select" doc:id="d01c3293-0f8c-465b-a45e-eecb219c410e" config-ref="Database_Config" >
+			<db:sql ><![CDATA[SELECT * FROM policies
+WHERE stage = 'ACTIVE'
+AND state = 'POLICY'
+AND isFullyPaid = 1
+]]></db:sql>
+		</db:select>
+		<foreach doc:name="For Each" doc:id="fac2beae-18d3-41f5-b8bb-d4e062ae8a12" >
+			<set-variable value="#[payload.policyId]" doc:name="Set Variable" doc:id="012b0132-05ff-4c96-8e36-aae31919983c" variableName="policy_id" />
+			<flow-ref doc:name="Flow Reference" doc:id="fe6be7c2-746f-42b5-a731-8830d62ef497" name="SelectPolicyWithDetailsFlow" />
+			<ee:transform doc:name="Transform Message" doc:id="a606f708-50c7-464f-8707-d597936c18ef" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var subs = payload."3".payload
+---
+{
+	email: subs.email,
+	subject: "Policy Expired",
+	content: "Hello, " ++ subs.firstName as String ++ ", I would like to inform you about your that will be expired. Thank you."
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="subscriber" ><![CDATA[%dw 2.0
+output application/java
+---
+payload."3".payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<jms:publish doc:name="Publish" doc:id="c4a4313c-69c5-4730-8a23-597e40461969" config-ref="JMS_Config" destination="emailQueue" persistentDelivery="true" >
+				<jms:message outboundContentType="application/json" />
+			</jms:publish>
+			<flow-ref doc:name="Flow Reference" doc:id="cdf36963-e095-4ee9-910c-2f3a199f2096" name="PoliciesExpiredFlow" />
+		</foreach>
+	</flow>
+</mule>

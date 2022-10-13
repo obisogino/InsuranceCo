@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="CoveragesBulkInsertFlow" doc:id="b0098e53-1885-4801-aed8-2607f6e96d17" >
+		<db:bulk-insert doc:name="Bulk insert" doc:id="36ada5da-b9e4-4971-a8cd-57c93e8ffcb4" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO coverages(coverageType, coverage, price, policyId)
+VALUES(:coverageType, :coverage, :price, :policyId)]]></db:sql>
+		</db:bulk-insert>
+	</flow>
+</mule>

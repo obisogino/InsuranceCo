@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<flow name="CreateCarPolicyFlow" doc:id="a41e9c32-869b-4ab8-985a-9eb4c870c750" >
+		<ee:transform doc:name="Transform Message" doc:id="16006e01-bfbe-47a2-a030-8752cbc72eb2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="totalPremium" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.totalPremium]]></ee:set-variable>
+				<ee:set-variable variableName="paymentOption" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.paymentOption]]></ee:set-variable>
+				<ee:set-variable variableName="policy_id" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.policyId]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="a41ddeb6-8607-40e0-a071-3aec2e89b135" >
+			<route >
+				<flow-ref doc:name="Flow Reference to Update Payment Option" doc:id="1d3e6fc5-dc82-4cc0-a9f2-6d24f53e05a8" name="UpdatePoliciesPaymentOptionFlow" />
+			</route>
+			<route >
+				<flow-ref doc:name="Flow Reference to InserSubscriber" doc:id="39f0f6e0-2241-492f-8e5d-f4bd7e478d4a" name="InsertSubscribersFlow" />
+			</route>
+		</scatter-gather>
+		<java:invoke-static method="getPaymentOptionValue(rcjinsurance.EnumHelper.PaymentOptions)" doc:name="Invoke static getPaymentOptionValue" doc:id="73a3d59d-3e4f-4185-80ca-e07e122c7132" class="insuranceco.EnumHelper" >
+			<java:args ><![CDATA[#[{
+	option: vars.paymentOption as Enum
+}]]]></java:args>
+		</java:invoke-static>
+		<ee:transform doc:name="Transform Message" doc:id="8f211ab1-62d6-4093-908c-65e1e5b9899b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var amoutDue = vars.totalPremium as Number / payload
+---
+{
+	"Policy No": vars.policy_id,
+	"Total Premium": vars.totalPremium,
+	"Payment Option": vars.paymentOption,
+	"Amount Due": amoutDue as String {format: "#.00"} as Number,
+	"Due Date": now() as Date
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="GetPolicyPaymentsControllerFlow" doc:id="09239047-ba7d-4812-aa61-0fa69c1bb2f9" >
+		<flow-ref doc:name="Flow Reference" doc:id="75aa5c5d-2dea-452d-affd-dd251320291c" name="SelectPaymentsByPolicyFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="291f2562-e758-48f3-8097-a4246e25a6f7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+	"Payment Id": $.paymentId,
+	"Balance": $.balance,
+	"Amount Due": $.amount,
+	"Remaining Balance": $.remainingBalance,
+	"Status": $.status,
+	"Payment Date": $.createdAt as String { format: "MM/dd/yyyy"}
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="GetPolicyByIdControllerFlow" doc:id="ecd990d6-2b83-4120-acba-b8ead0fb5635" >
+		<flow-ref doc:name="Flow Reference" doc:id="f9fb1235-c397-490b-a377-d2051be4cc9a" name="SelectSinglePolicyFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="4498c32d-7927-489e-b8d9-371064b8f596" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

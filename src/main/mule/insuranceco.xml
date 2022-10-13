@@ -175,6 +175,7 @@ output application/json
     </flow>
     <flow name="post:\policies\retirement:multipart\form-data:insuranceco-config">
         <logger level="INFO" message="post:\policies\retirement:multipart\form-data:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="553257eb-59bf-4a53-816d-d912cf8f2421" name="createRetirementPolicy1"/>
     </flow>
     <flow name="post:\policies\car:insuranceco-config">
         <logger level="INFO" message="post:\policies\car:insuranceco-config" />

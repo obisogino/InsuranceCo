@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<file:config name="File_ConfigForGovtIds" doc:name="File Config" doc:id="acd5f09a-3cc3-4eae-8573-940ae7208752" >
+		<file:connection workingDir="C:\SpaceBank\policy\retirement\GovernmentIDs" />
+	</file:config>
+	<flow name="CreateRetirementPolicy" doc:id="6cec3db1-4f4a-4f5b-a40d-bdeb282920c9" >
+		<set-variable value="#[attributes.headers.authToken]" doc:name="Set Variable authToken" doc:id="86238499-0eb9-40c5-ab1f-064c08e8aa30" variableName="authToken" />
+		<set-variable value="#[payload.parts.policyInfo.content]" doc:name="Set Variable policyInfo" doc:id="d724612b-0852-499c-98a9-d98bf14dea47" variableName="policyInfo" mimeType="application/json" />
+		<set-variable value="#[{}]" doc:name="Set Variable accountInfo" doc:id="dbd530ae-c3c4-4ddc-9951-9725f70c6d56" variableName="accountInfo" />
+		<set-variable value="#[payload.parts.govtId.content]" doc:name="Set Variable govtId" doc:id="82105017-200b-4121-9b7e-248c585faf30" variableName="govtId" />
+		<flow-ref doc:name="Flow Reference getLoggedIn" doc:id="3d449dac-2343-49e4-9b63-e0ca7b146ceb" name="getLoggedIn(authToken)" />
+		<ee:transform doc:name="Transform Message" doc:id="7bee96ae-8c07-4f78-b9e7-957357929035">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	goalBenefit : vars.policyInfo.goalBenefit as Number,
+	goalAge: vars.policyInfo.goalAge as Number,
+	ageNow: vars.policyInfo.age as Number,
+	accountScore: vars.accountInfo.accountScore as Number
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<java:invoke-static method="getComputationGoalAndPremiumInArr(java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Double)" doc:name="Invoke static" doc:id="9ab0fb57-42da-4e70-995f-367e4bb846c9" class="com.spacebank.insurancecenter.RetirementGoalProcessor">
+					<java:args><![CDATA[#[{
+	goalBenefit : payload.goalBenefit,
+	goalAge: payload.goalAge,
+	ageNow: payload.ageNow,
+	accountScore: payload.accountScore
+}]]]></java:args>
+				</java:invoke-static>
+		<set-variable value="#[output application/json &#10;---&#10;payload]" doc:name="Set Variable matrix" doc:id="4a435ae4-ba94-453a-8688-a24ee860530b" variableName="matrix" />
+		<java:invoke-static method="generateNumeric(java.lang.Integer)" doc:name="Invoke static" doc:id="ae25d7f4-ad5a-404d-ba13-c32bcab5eab3" class="com.spacebank.insurancecenter.AlphaNumGenerator1">
+					<java:args><![CDATA[#[{length:8}]]]></java:args>
+				</java:invoke-static>
+		<set-variable value="#[payload]" doc:name="Set Variable policyNumber" doc:id="5afdb527-d760-483c-b3cf-92eb47ea6c21" variableName="policyNumber" />
+		<ee:transform doc:name="Transform Message" doc:id="be78ed4e-7fcc-430e-983b-a756e0cd213a">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="bulkMatrix"><![CDATA[%dw 2.0
+output application/json
+---
+vars.matrix map{
+	annualPremium : $.annualPremium,
+	disabilityInsurance : $.disabilityInsurance,
+	policyValue : $.policyValue,
+	lifeInsurance : $.lifeInsurance,
+	insuredAge : $.insuredAge,
+	claimable : $.claimable as Number / 4,
+	year : $.year,
+	policyNumber : vars.policyNumber as Number
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+		<db:bulk-insert doc:name="Bulk insert" doc:id="dd4c26a2-27f8-444c-992b-13be5e77d866" config-ref="Database_Config">
+					<db:bulk-input-parameters><![CDATA[#[vars.bulkMatrix]]]></db:bulk-input-parameters>
+					<db:sql><![CDATA[insert into policyretirementmatrix (
+	annualPremium,
+	disabilityInsurance,
+	policyValue,
+	lifeInsurance,
+	insuredAge,
+	claimable,
+	year,
+	policyNumber) values (
+	:annualPremium,
+	:disabilityInsurance,
+	:policyValue,
+	:lifeInsurance,
+	:insuredAge,
+	:claimable,
+	:year,
+	:policyNumber)]]></db:sql>
+				</db:bulk-insert>
+		<db:insert doc:name="Insert" doc:id="07cb3bc3-6de4-44b6-bfa3-d1bde93c3530" config-ref="Database_Config">
+					<db:sql><![CDATA[insert into policyretirement (username, benefit, retirementAge, beneficiaryName, beneficiaryIdNum, policyNumber, annualPremium) values (:username, :benefit, :retirementAge, :beneficiaryName, :beneficiaryIdNum, :policyNumber, :annualPremium)]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	username : vars.accountInfo.username,
+	benefit : vars.policyInfo.goalBenefit,
+	retirementAge: vars.policyInfo.goalAge,
+	beneficiaryName: vars.policyInfo.beneficiaryName,
+	beneficiaryIdNum: vars.policyInfo.beneficiaryIdNum,
+	policyNumber: vars.policyNumber, 
+	annualPremium: vars.matrix[0].annualPremium}]]]></db:input-parameters>
+				</db:insert>
+		<set-payload value='#[output application/json&#10;---&#10;//flatten([payload[1].payload])&#10;{message: "Policy Created"}]' doc:name="Set Payload" doc:id="7e4b2b63-9e1e-4b69-8424-922a1527752d" />
+	</flow>
+	<flow name="createRetirementPolicy1" doc:id="b7713894-8b7e-422d-b7d3-d3060a08713b" >
+		<set-variable value="#[attributes.headers.authToken]" doc:name="Set Variable authToken" doc:id="f8d06e5e-5d0d-4a47-9a8a-0f09d0adba88" variableName="authToken" />
+		<set-variable value="#[payload.parts.policyInfo.content]" doc:name="Set Variable policyInfo" doc:id="b2bf4186-667d-416e-9324-5a1aefeffe17" variableName="policyInfo" mimeType="application/json" />
+		<set-variable value="#[{}]" doc:name="Set Variable accountInfo" doc:id="4b2d6098-af6e-4aa3-82cd-5291afbbdbe1" variableName="accountInfo" />
+		<set-variable value="#[payload.parts.govtId.content]" doc:name="Set Variable govtId" doc:id="57fe72c9-ba10-4859-baba-b771e5cd27fe" variableName="govtId" />
+		<flow-ref doc:name="Flow Reference" doc:id="f9dcc405-e755-4f6b-9d56-880ec93ba2bf" name="getLoggedIn(authToken)" />
+		<scatter-gather doc:name="Scatter-Gather" doc:id="5dfb0863-37bb-49d7-8980-044678a6e97e" >
+			<route >
+				<ee:transform doc:name="Copy_of_TTMessage" doc:id="72a374d5-9834-4fa5-8fc8-50c6c3af47cb" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/octet-stream
+---
+vars.govtId]]></ee:set-payload>
+					</ee:message>
+					<ee:variables />
+				</ee:transform>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="01899634-52c9-42d5-a709-095443b3ed60" mimeType="image/jpeg" />
+				<file:write doc:name="Write" doc:id="8418f614-c223-40fd-a867-996fda8f4d3d" config-ref="File_ConfigForGovtIds" path='#[vars.accountInfo.username as String ++ ".jpg" as String]'/>
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="5d251a3d-7424-4245-af91-0ae5f1a743c1" />
+				<ee:transform doc:name="Transform Message" doc:id="8a31c62d-b342-4233-9659-0e981ef067de" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	goalBenefit : vars.policyInfo.goalBenefit as Number,
+	goalAge: vars.policyInfo.goalAge as Number,
+	ageNow: vars.policyInfo.age as Number,
+	accountScore: vars.accountInfo.accountScore as Number
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<java:invoke-static method="getComputationGoalAndPremiumInArr(java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Double)" doc:name="Invoke static" doc:id="e23da717-c6d5-44d4-9217-4d4f04a4267a" class="com.spacebank.insurancecenter.RetirementGoalProcessor" >
+					<java:args ><![CDATA[#[{
+	goalBenefit : payload.goalBenefit,
+	goalAge: payload.goalAge,
+	ageNow: payload.ageNow,
+	accountScore: payload.accountScore
+}]]]></java:args>
+				</java:invoke-static>
+				<set-variable value="#[output application/json &#10;---&#10;payload]" doc:name="Set Variable matrix" doc:id="3e529a8e-53ee-4ee1-9c3e-4944eea81ead" variableName="matrix" />
+				<java:invoke-static method="generateNumeric(java.lang.Integer)" doc:name="Invoke static" doc:id="306de68d-67d4-4963-b8a2-af4e225b049f" class="com.spacebank.insurancecenter.AlphaNumGenerator1" >
+					<java:args ><![CDATA[#[{length:8}]]]></java:args>
+				</java:invoke-static>
+				<set-variable value="#[payload]" doc:name="Set Variable policyNumber" doc:id="3130dea1-c377-4cdf-89e2-0574d73254dd" variableName="policyNumber" />
+				<ee:transform doc:name="Transform Message" doc:id="236155c6-da49-4d17-99b6-215d4f1a89ab" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="bulkMatrix" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.matrix map{
+	annualPremium : $.annualPremium,
+	disabilityInsurance : $.disabilityInsurance,
+	policyValue : $.policyValue,
+	lifeInsurance : $.lifeInsurance,
+	insuredAge : $.insuredAge,
+	claimable : $.claimable as Number / 4,
+	year : $.year,
+	policyNumber : vars.policyNumber as Number
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<db:bulk-insert doc:name="Bulk insert" doc:id="8e3d3156-41e2-4723-9ba2-84d72decb9a3" config-ref="Database_Config" >
+					<db:bulk-input-parameters ><![CDATA[#[vars.bulkMatrix]]]></db:bulk-input-parameters>
+					<db:sql ><![CDATA[insert into policyretirementmatrix (
+	annualPremium,
+	disabilityInsurance,
+	policyValue,
+	lifeInsurance,
+	insuredAge,
+	claimable,
+	year,
+	policyNumber) values (
+	:annualPremium,
+	:disabilityInsurance,
+	:policyValue,
+	:lifeInsurance,
+	:insuredAge,
+	:claimable,
+	:year,
+	:policyNumber)]]></db:sql>
+				</db:bulk-insert>
+				<db:insert doc:name="Insert" doc:id="a6b694db-9f06-4e05-bf8d-51cae2a19016" config-ref="Database_Config" >
+					<db:sql ><![CDATA[insert into policyretirement (username, benefit, retirementAge, beneficiaryName, beneficiaryIdNum, policyNumber, annualPremium) values (:username, :benefit, :retirementAge, :beneficiaryName, :beneficiaryIdNum, :policyNumber, :annualPremium)]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	username : vars.accountInfo.username,
+	benefit : vars.policyInfo.goalBenefit,
+	retirementAge: vars.policyInfo.goalAge,
+	beneficiaryName: vars.policyInfo.beneficiaryName,
+	beneficiaryIdNum: vars.policyInfo.beneficiaryIdNum,
+	policyNumber: vars.policyNumber, 
+	annualPremium: vars.matrix[0].annualPremium}]]]></db:input-parameters>
+				</db:insert>
+			</route>
+		</scatter-gather>
+		<set-payload value='#[output application/json&#10;---&#10;//flatten([payload[1].payload])&#10;{message: "Policy Created"}]' doc:name="Set Payload" doc:id="d5fc7014-ed88-464c-8b08-b9f80222bf8f" />
+	</flow>
+</mule>

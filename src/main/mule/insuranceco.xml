@@ -128,16 +128,16 @@ output application/json
     </flow>
     <flow name="get:\policies\hmo:insuranceco-config">
         <logger level="INFO" message="get:\policies\hmo:insuranceco-config" />
-		<flow-ref doc:name="Flow Reference" doc:id="6141719d-7f82-4828-bc2e-5086fa3bf405" name="GetHMO"/>
+        <flow-ref doc:name="Flow Reference" doc:id="6141719d-7f82-4828-bc2e-5086fa3bf405" name="GetHMO" />
     </flow>
     <flow name="get:\policies\travel\list:insuranceco-config">
         <logger level="INFO" message="get:\policies\travel\list:insuranceco-config" />
     </flow>
     <flow name="get:\policies\hmo\list:insuranceco-config">
         <logger level="INFO" message="get:\policies\hmo\list:insuranceco-config" />
-		<ee:transform doc:name="Transform Message" doc:id="b15621fd-c225-47b7-af70-f0995209d582" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+        <ee:transform doc:name="Transform Message" doc:id="b15621fd-c225-47b7-af70-f0995209d582">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 [
@@ -154,8 +154,8 @@ output application/json
 	"monthly premium": "P4000"
 }
 ]]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+            </ee:message>
+        </ee:transform>
     </flow>
     <flow name="get:\policies\travel:insuranceco-config">
         <logger level="INFO" message="get:\policies\travel:insuranceco-config" />
@@ -204,7 +204,7 @@ output application/json
     </flow>
     <flow name="post:\policies\hmo\subscribe:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\hmo\subscribe:application\json:insuranceco-config" />
-		<flow-ref doc:name="Flow Reference" doc:id="8075efe3-f65e-422a-bf6e-92b27ef4ae46" name="createHMOplan"/>
+        <flow-ref doc:name="Flow Reference" doc:id="8075efe3-f65e-422a-bf6e-92b27ef4ae46" name="createHMOplan" />
     </flow>
     <flow name="post:\policies\travel:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\travel:application\json:insuranceco-config" />
@@ -262,5 +262,9 @@ output application/json
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
+    </flow>
+    <flow name="post:\policies\settle:application\json:insuranceco-config">
+        <logger level="INFO" message="post:\policies\settle:application\json:insuranceco-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="e6bc653b-66fd-42ba-9ffe-1ab06b3c16b1" name="settleBill"/>
     </flow>
 </mule>

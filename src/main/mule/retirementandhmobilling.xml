@@ -42,4 +42,48 @@ output application/json
 			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
 		</db:insert>
 	</flow>
+	<flow name="settleBill" doc:id="9299e178-d777-4876-b7b6-41e1067b0fd7" >
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="9a8cd519-ec82-4be9-848f-fc46f9a66ec0" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="inpt" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:query-single doc:name="Query Bill" doc:id="f50de160-ec01-4c59-8f44-16ff1cd74554" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select * from bill where referenceNumber = :referenceNumber	]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{referenceNumber:vars.inpt.referenceNumber}]]]></db:input-parameters>
+		</db:query-single>
+		<set-variable value="#[payload]" doc:name="Set Variable bill" doc:id="5cfef97f-75dc-4c94-9889-994b9a857abc" variableName="bill"/>
+		<ee:transform doc:name="Transform Message" doc:id="e41315a1-adcf-4b75-8e07-c078eeb7784e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="newBill" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	amountToPay : if ((vars.bill.amountToPay as Number - vars.inpt.amount as Number) > 0) (vars.bill.amountToPay as Number - vars.inpt.amount as Number) else (0),
+	isSettled: if ((vars.bill.amountToPay as Number - vars.inpt.amount as Number) > 0) (false) else (true),
+	amountPaid: vars.inpt.amount,
+	referenceNumber: vars.inpt.referenceNumber
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:update doc:name="Update Bill" doc:id="78e00bdf-d50e-4cb9-bf4f-57452e1bf020" config-ref="Database_Config">
+			<db:sql ><![CDATA[update bill
+set
+	amountToPay = :amountToPay,
+	amountPaid = :amountPaid,
+	isSettled = :isSettled
+	
+where 
+	referenceNumber = :referenceNumber
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.newBill]]]></db:input-parameters>
+		</db:update>
+		<set-payload doc:name="Set Payload" doc:id="c6169840-86de-4566-8c16-9f58f6059402" mimeType="application/json" value="#[vars.newBill]" />
+	</flow>
 </mule>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="hmo-suite.xml" />
+	<munit:test name="createHMOplanChoiceA-test" doc:id="ad96ddde-28fa-4bbd-9f61-76a2d3e2b532" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Copy_of_Flow Reference" doc:id="6dc6b73c-51ca-4cfb-a6eb-0f731b095e45" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="2dbf1aa1-58fa-4fd7-85a4-6154de89e7bd" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://createHMOplanChoiceAtest\mock_payload.dwl')]" mediaType="application/java " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="accountInfo" value="#[output application/java --- readUrl('classpath://createHMOplanChoiceAtest\mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://createHMOplanChoiceAtest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="authToken" value="#[output application/java --- readUrl('classpath://createHMOplanChoiceAtest\mock_variable_2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="subscribeTo" value="#[output application/json --- readUrl('classpath://createHMOplanChoiceAtest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="38f43c79-7468-4d7a-910c-0f26b99b0d22" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://createHMOplanChoiceAtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				<munit:attributes value="#[readUrl('classpath://createHMOplanChoiceAtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://createHMOplanChoiceAtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to createHMOplan" doc:id="7c18cf7d-2220-45bb-bd7f-ea8798016152" name="createHMOplan"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="0a6e8e2d-3dad-42eb-883e-3f00fdfbcce9" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import createHMOplanChoiceAtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Flow Reference" doc:id="6c582796-089c-4774-a1da-a11251195612" processor="flow-ref" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="586c4d69-da34-43bb-bd47-c80bf8a4a44a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="createHMOplanPlanB-test" doc:id="8d40c544-0920-4906-a4f5-4eb3cd830c0f" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Copy_of_Flow Reference" doc:id="8aaa94ff-5396-49ef-b480-f7dc161e47f1" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="2dbf1aa1-58fa-4fd7-85a4-6154de89e7bd" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://createHMOplanPlanBtest\mock_payload.dwl')]" mediaType="application/java " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="accountInfo" value="#[output application/java --- readUrl('classpath://createHMOplanPlanBtest\mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://createHMOplanPlanBtest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="authToken" value="#[output application/java --- readUrl('classpath://createHMOplanPlanBtest\mock_variable_2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="subscribeTo" value="#[output application/json --- readUrl('classpath://createHMOplanPlanBtest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="010d616c-c345-45b1-afb6-a7b615836709" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://createHMOplanPlanBtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				<munit:attributes value="#[readUrl('classpath://createHMOplanPlanBtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://createHMOplanPlanBtest\set-event_variable_.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to createHMOplan" doc:id="c75c66e3-2cf8-40cd-8061-18f4bdebe921" name="createHMOplan"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="563aa550-48ad-4f70-9245-618baa72b8f1" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import createHMOplanPlanBtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Flow Reference" doc:id="3bf515a0-edc9-46d6-bcd1-346a1e9a8c2e" processor="flow-ref" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="e72ceebc-4083-4625-bc97-985f0850ec38" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

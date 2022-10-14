@@ -1,0 +1,21 @@
+{
+  "firstName": "Gino Karlo",
+  "salt": null,
+  "premiumMultiplier": 1.2000000476837158,
+  "accountScore": 7.0,
+  "city": null,
+  "accountType": null,
+  "middleName": null,
+  "dateCreated": null,
+  "userId": 2,
+  "jobCategoryId": 3,
+  "lastName": "Obiso",
+  "zipCode": null,
+  "password": "password",
+  "nationality": "Filipino",
+  "addressLine2": null,
+  "addressLine1": "Cebu City",
+  "state": null,
+  "insuranceWallet": 300000.0,
+  "username": "obisogino"
+}

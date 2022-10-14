@@ -1,0 +1,30 @@
+{
+  "headers": {
+    "authtoken": "yU8hP9nF9c",
+    "authorization": "Basic c3BhY2ViYW5rOnNwYWNlYmFuaw==",
+    "content-type": "application/json",
+    "user-agent": "PostmanRuntime/7.29.2",
+    "accept": "*/*",
+    "postman-token": "6273589f-c6e8-43df-b1bd-c8c1fcc48ba8",
+    "host": "localhost:8081",
+    "accept-encoding": "gzip, deflate, br",
+    "connection": "keep-alive",
+    "content-length": "25"
+  },
+  "clientCertificate": null,
+  "method": "POST",
+  "scheme": "http",
+  "queryParams": {},
+  "requestUri": "/api/policies/hmo/subscribe",
+  "queryString": "",
+  "version": "HTTP/1.1",
+  "maskedRequestPath": "/policies/hmo/subscribe",
+  "listenerPath": "/api/*",
+  "relativePath": "/api/policies/hmo/subscribe",
+  "localAddress": "/127.0.0.1:8081",
+  "uriParams": {},
+  "rawRequestUri": "/api/policies/hmo/subscribe",
+  "rawRequestPath": "/api/policies/hmo/subscribe",
+  "remoteAddress": "/127.0.0.1:59956",
+  "requestPath": "/api/policies/hmo/subscribe"
+}

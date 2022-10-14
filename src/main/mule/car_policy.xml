@@ -36,16 +36,25 @@ payload.policyId]]></ee:set-variable>
 				<flow-ref doc:name="Flow Reference to InserSubscriber" doc:id="39f0f6e0-2241-492f-8e5d-f4bd7e478d4a" name="InsertSubscribersFlow" />
 			</route>
 		</scatter-gather>
-		<java:invoke-static method="getPaymentOptionValue(rcjinsurance.EnumHelper.PaymentOptions)" doc:name="Invoke static getPaymentOptionValue" doc:id="73a3d59d-3e4f-4185-80ca-e07e122c7132" class="insuranceco.EnumHelper" >
-			<java:args ><![CDATA[#[{
-	option: vars.paymentOption as Enum
-}]]]></java:args>
-		</java:invoke-static>
+		<ee:transform doc:name="Transform Message" doc:id="fbc5ddd9-0008-4876-9787-58ae835d0ea7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+if (vars.paymentOption as String == 'THREE_MONTHS')
+	{noOfMonth: 3}
+else if (vars.paymentOption as String == 'SIX_MONTHS')
+	{noOfMonth: 3}
+else if (vars.paymentOption as String == 'TWELVE_MONTHS')
+	{noOfMonth: 12}
+else {noOfMonth: 1}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 		<ee:transform doc:name="Transform Message" doc:id="8f211ab1-62d6-4093-908c-65e1e5b9899b" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
-var amoutDue = vars.totalPremium as Number / payload
+var amoutDue = vars.totalPremium as Number / payload.noOfMonth
 ---
 {
 	"Policy No": vars.policy_id,

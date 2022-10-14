@@ -233,10 +233,20 @@ output application/json
     </flow>
     <flow name="post:\policies\car\quote:application\json:insuranceco-config">
         <flow-ref doc:name="Flow Reference" doc:id="3a9cd834-affc-4d8f-9748-51077d68d397" name="CarUnderwritingFlow" />
-        <logger level="INFO" message="post:\policies\car\quote:application\json:insuranceco-config" />
+		<ee:transform doc:name="Transform Message" doc:id="2fdffa55-b800-4472-9700-9cb1d2e78a6c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	data: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
     </flow>
     <flow name="post:\policies\car:application\json:insuranceco-config">
-        <logger level="INFO" message="post:\policies\car:application\json:insuranceco-config" />
+        <flow-ref doc:name="Flow Reference" doc:id="dd634120-0078-4350-ba14-1f5cd2013af7" name="CreateCarPolicyFlow"/>
         <ee:transform doc:name="Transform Message" doc:id="0c75cfe0-27a8-44d2-b474-4330544848b6">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
@@ -265,6 +275,6 @@ output application/json
     </flow>
     <flow name="post:\policies\settle:application\json:insuranceco-config">
         <logger level="INFO" message="post:\policies\settle:application\json:insuranceco-config" />
-		<flow-ref doc:name="Flow Reference" doc:id="e6bc653b-66fd-42ba-9ffe-1ab06b3c16b1" name="settleBill"/>
+        <flow-ref doc:name="Flow Reference" doc:id="e6bc653b-66fd-42ba-9ffe-1ab06b3c16b1" name="settleBill" />
     </flow>
 </mule>

@@ -125,6 +125,20 @@ output application/json
     </flow>
     <flow name="get:\account:insuranceco-config">
         <logger level="INFO" message="get:\account:insuranceco-config" />
+		<ee:transform doc:name="Transform Message" doc:id="1e11bf52-861a-43fa-9b59-093067dbdb59" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "goalBenefit": 2000000,
+  "goalAge": 55,
+  "ageNow": 31,
+  "accountScore": 7.0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="b4f12d69-c0b2-4234-bd0e-847926649d29" name="generate"/>
     </flow>
     <flow name="get:\policies\hmo:insuranceco-config">
         <logger level="INFO" message="get:\policies\hmo:insuranceco-config" />
@@ -215,7 +229,7 @@ output application/json
     </flow>
     <flow name="post:\policies\retirement:multipart\form-data:insuranceco-config">
         <logger level="INFO" message="post:\policies\retirement:multipart\form-data:insuranceco-config" />
-        <flow-ref doc:name="Flow Reference" doc:id="553257eb-59bf-4a53-816d-d912cf8f2421" name="createRetirementPolicy1" />
+        <flow-ref doc:name="Flow Reference" doc:id="553257eb-59bf-4a53-816d-d912cf8f2421" name="createRetirementPolicy2NoJava" />
     </flow>
     <flow name="post:\policies\car:insuranceco-config">
         <flow-ref doc:name="Flow Reference" doc:id="60173ebb-4dd2-4d4b-9efa-cf532fb90af0" name="CreateCarPolicyFlow" />

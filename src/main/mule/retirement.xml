@@ -194,6 +194,49 @@ vars.matrix map{
 		</scatter-gather>
 		<set-payload value='#[output application/json&#10;---&#10;//flatten([payload[1].payload])&#10;{message: "Policy Created"}]' doc:name="Set Payload" doc:id="d5fc7014-ed88-464c-8b08-b9f80222bf8f" />
 	</flow>
+	<sub-flow name="generate" doc:id="0b71ad13-52fc-44db-bd7f-bd6df7486fda" >
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="b0a49cf6-5792-464c-be29-34d90faaf894">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="inp"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	goalBenefit : payload.goalBenefit as Number,
+	goalAge: payload.goalAge as Number,
+	ageNow: payload.ageNow as Number,
+	accountScore: payload.accountScore as Number
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[(payload.goalAge as Number - payload.ageNow as Number) as Number]" doc:name="yearsToPay" doc:id="3adc7479-458a-4c61-a398-2a9ce76a9a34" variableName="yearsToPay"/>
+		<set-variable value="#[(vars.inp.goalBenefit as Number / (vars.yearsToPay as Number))/ vars.inp.accountScore as Number]" doc:name="annualPremium" doc:id="47b842dd-0539-4d1e-bc9d-5964e12d7e56" variableName="annualPremium"/>
+		<ee:transform doc:name="Transform Message" doc:id="d13fa534-66f8-41c7-8b9f-e37c2f69b46f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="baseArr" ><![CDATA[%dw 2.0
+output application/json
+
+---
+(1 to (vars.yearsToPay default 0)) map ((item, index) -> {
+	
+		annualPremium: vars.annualPremium as String {format: "0.00"},
+		year : item,
+		policyValue : (item as Number * vars.annualPremium as Number) as String {format: "0.00"},
+		claimable: if(item >= 3)
+				{claim: (item as Number * vars.annualPremium) as String {format: "0.00"} } else { claim: 0 },
+		insuredAge: vars.inp.ageNow as Number ++ item as Number,
+		lifeInsurance: (item as Number * vars.annualPremium as Number * vars.inp.accountScore as Number ) as String {format: "0.00"},
+		disabilityInsurance: (item as Number * vars.annualPremium as Number * vars.inp.accountScore as Number)as String {format: "0.00"}
+	
+
+} )]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-payload value="#[vars.baseArr]" doc:name="Set Payload" doc:id="1542325e-72ec-4fc7-851d-1d03723aa1bb" />
+	</sub-flow>
 	<flow name="claim" doc:id="bb113db7-1acb-4561-a014-a696583d38e7" >
 		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="f97a51dd-8a50-4a9d-9f23-39078e13a949" variableName="inpt" mimeType="application/json" />
 		<set-variable value="#[attributes.headers.authToken]" doc:name="Set Variable authToken" doc:id="f45f722b-ac5f-45ba-a6af-42233c9a956b" variableName="authToken" />
@@ -271,5 +314,96 @@ where
 				<set-payload value='#[{message: "No Claimable"}]' doc:name="Copy_of_Set Payload" doc:id="c9d34d55-5e1c-4cef-8e72-54e93ebb1b35" />
 			</otherwise>
 		</choice>
+	</flow>
+	<flow name="createRetirementPolicy2NoJava" doc:id="d4503f94-5a90-4e42-bd0c-cc67d5866342" >
+		<set-variable value="#[attributes.headers.authToken]" doc:name="Set Variable authToken" doc:id="c754b015-4dae-44c5-a875-d17aa69dd6c4" variableName="authToken" />
+		<set-variable value="#[payload.parts.policyInfo.content]" doc:name="Set Variable policyInfo" doc:id="b0482663-9cfd-4737-991c-67f36533e0a0" variableName="policyInfo" mimeType="application/json" />
+		<set-variable value="#[{}]" doc:name="Set Variable accountInfo" doc:id="68bdef36-e9eb-498f-af4f-5cbc82da5d51" variableName="accountInfo" />
+		<set-variable value="#[payload.parts.govtId.content]" doc:name="Set Variable govtId" doc:id="253eac32-400e-42ec-9538-1ad5dbbfa3cb" variableName="govtId" />
+		<flow-ref doc:name="Flow Reference" doc:id="7754d830-7c90-46fb-908c-78e4acef25b9" name="getLoggedIn(authToken)" />
+		<scatter-gather doc:name="Scatter-Gather" doc:id="b861ae87-c1ef-4f6b-b3a1-7d418be2d129" >
+			<route >
+				<ee:transform doc:name="Copy_of_TTMessage" doc:id="ad83efa9-d2dc-49d4-89a0-0c14576e5cb8" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/octet-stream
+---
+vars.govtId]]></ee:set-payload>
+					</ee:message>
+					<ee:variables />
+				</ee:transform>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="d5054e48-5311-48aa-aae6-a92e7c91833b" mimeType="image/jpeg" />
+				<file:write doc:name="Write" doc:id="8e8afc43-5326-4d94-960b-99d67d806b6c" config-ref="File_ConfigForGovtIds" path='#[vars.accountInfo.username as String ++ ".jpg" as String]' />
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="ef3348b4-ef47-4d6a-819b-c3d78aab2bdc" />
+				<ee:transform doc:name="Transform Message" doc:id="df9fdf7e-f51e-4853-94df-6178cf78425f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	goalBenefit : vars.policyInfo.goalBenefit as Number,
+	goalAge: vars.policyInfo.goalAge as Number,
+	ageNow: vars.policyInfo.age as Number,
+	accountScore: vars.accountInfo.accountScore as Number
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="bdb01073-ecdd-4edb-ab2f-adcdb1e7dc61" name="generate"/>
+				<set-variable value="#[output application/json &#10;---&#10;payload]" doc:name="Set Variable matrix" doc:id="8f080c67-ad2b-40e4-bd0c-3a0a406fe262" variableName="matrix" />
+				<set-variable value='#[(random() * 100000000) as String {format: "00000000"}]' doc:name="Set Variable policyNumber" doc:id="c8ebc7f5-bf13-4bca-a2db-40e30032d701" variableName="policyNumber" />
+				<ee:transform doc:name="Transform_Message" doc:id="37bfd6db-90dd-4a25-970b-0fd49993af94" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="bulkMatrix" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.matrix map{
+	annualPremium : $.annualPremium,
+	disabilityInsurance : $.disabilityInsurance,
+	policyValue : $.policyValue,
+	lifeInsurance : $.lifeInsurance,
+	insuredAge : $.insuredAge,
+	claimable : $.claimable.claim as Number / 4,
+	year : $.year,
+	policyNumber : vars.policyNumber as Number
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<db:bulk-insert doc:name="Copy_of_Bulk insert" doc:id="1d6558c5-0d23-41ea-8202-e3b47b626c91" config-ref="Database_Config" >
+					<db:bulk-input-parameters ><![CDATA[#[vars.bulkMatrix]]]></db:bulk-input-parameters>
+					<db:sql ><![CDATA[insert into policyretirementmatrix (
+	annualPremium,
+	disabilityInsurance,
+	policyValue,
+	lifeInsurance,
+	insuredAge,
+	claimable,
+	year,
+	policyNumber) values (
+	:annualPremium,
+	:disabilityInsurance,
+	:policyValue,
+	:lifeInsurance,
+	:insuredAge,
+	:claimable,
+	:year,
+	:policyNumber)]]></db:sql>
+				</db:bulk-insert>
+				<db:insert doc:name="Copy_of_Insert" doc:id="5ff5d950-d4e4-4f9f-9ab2-eeaecd4eb74e" config-ref="Database_Config" >
+					<db:sql ><![CDATA[insert into policyretirement (username, benefit, retirementAge, beneficiaryName, beneficiaryIdNum, policyNumber, annualPremium) values (:username, :benefit, :retirementAge, :beneficiaryName, :beneficiaryIdNum, :policyNumber, :annualPremium)]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	username : vars.accountInfo.username,
+	benefit : vars.policyInfo.goalBenefit,
+	retirementAge: vars.policyInfo.goalAge,
+	beneficiaryName: vars.policyInfo.beneficiaryName,
+	beneficiaryIdNum: vars.policyInfo.beneficiaryIdNum,
+	policyNumber: vars.policyNumber, 
+	annualPremium: vars.matrix[0].annualPremium}]]]></db:input-parameters>
+				</db:insert>
+			</route>
+		</scatter-gather>
+		<set-payload value='#[output application/json&#10;---&#10;//flatten([payload[1].payload])&#10;{message: "Policy Created"}]' doc:name="Set Payload" doc:id="0ca5a031-c4b5-4212-8104-9808f155d03d" />
 	</flow>
 </mule>
